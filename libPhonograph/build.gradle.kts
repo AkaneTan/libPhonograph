@@ -8,6 +8,12 @@ android {
     compileSdk = 35
 
     defaultConfig {
+        aarMetadata {
+            minCompileSdk = 33
+        }
+        testFixtures {
+            enable = true
+        }
         minSdk = 16
         consumerProguardFiles("consumer-rules.pro")
     }
@@ -29,6 +35,12 @@ android {
 
     kotlinOptions {
         jvmTarget = "1.8"
+    }
+
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+        }
     }
 }
 

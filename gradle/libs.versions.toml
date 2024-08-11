@@ -10,13 +10,17 @@ material = "1.10.0"
 activity = "1.8.0"
 constraintlayout = "2.1.4"
 media3Common = "1.4.0"
+media3CommonVersion = "1.4.0"
+picasso = "2.71828"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+androidx-media3-common = { module = "androidx.media3:media3-common", version.ref = "media3CommonVersion" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+picasso = { module = "com.squareup.picasso:picasso", version.ref = "picasso" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

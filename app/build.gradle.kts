@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "uk.akane.phonographdemo"
-        minSdk = 16
+        minSdk = 21
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -19,7 +19,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -43,4 +44,6 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.media3.common)
+    implementation(libs.picasso)
 }

@@ -3,6 +3,44 @@
     <style name="Base.Theme.MyApplication" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.App.MaterialAlertDialog</item>
+    </style>
+
+    <style name="TextAppearance.App.HeadlineLarge" parent="TextAppearance.Material3.HeadlineLarge">
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextAppearance.App.TitleLarge" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="ThemeOverlay.App.MaterialAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog.Centered">
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="materialAlertDialogTitleTextStyle">@style/MaterialAlertDialog.App.Title.Text</item>
+        <item name="materialAlertDialogBodyTextStyle">@style/MaterialAlertDialog.App.Body.Text</item>
+        <item name="materialAlertDialogTitleIconStyle">@style/MaterialAlertDialog.App.Icon</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.App.Button</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Widget.App.Button</item>
+    </style>
+
+    <style name="MaterialAlertDialog.App.Title.Text" parent="MaterialAlertDialog.Material3.Title.Text.CenterStacked">
+        <item name="android:textSize">24sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="MaterialAlertDialog.App.Body.Text" parent="MaterialAlertDialog.Material3.Body.Text">
+        <item name="android:textSize">15sp</item>
+    </style>
+
+    <style name="MaterialAlertDialog.App.Icon" parent="MaterialAlertDialog.Material3.Title.Icon.CenterStacked">
+        <item name="android:layout_height">32dp</item>
+        <item name="android:layout_width">32dp</item>
+        <item name="android:layout_marginTop">12dp</item>
+    </style>
+
+    <style name="Widget.App.Button" parent="Widget.Material3.Button.TextButton.Dialog">
+        <item name="android:textFontWeight" tools:ignore="NewApi">600</item>
     </style>
 
     <style name="Theme.MyApplication" parent="Base.Theme.MyApplication" />
