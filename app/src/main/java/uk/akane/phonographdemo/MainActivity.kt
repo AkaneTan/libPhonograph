@@ -144,6 +144,7 @@ class MainActivity : AppCompatActivity() {
                                     .setRecordingMonth(recordingMonth)
                                     .setRecordingYear(recordingYear)
                                     .setReleaseYear(releaseYear)
+                                    .setDurationMs(duration)
                                     .setExtras(Bundle().apply {
                                         if (artistId != null) {
                                             putLong("ArtistId", artistId)
@@ -157,9 +158,6 @@ class MainActivity : AppCompatActivity() {
                                         putString("Author", author)
                                         if (addDate != null) {
                                             putLong("AddDate", addDate)
-                                        }
-                                        if (duration != null) {
-                                            putLong("Duration", duration)
                                         }
                                         if (modifiedDate != null) {
                                             putLong("ModifiedDate", modifiedDate)
