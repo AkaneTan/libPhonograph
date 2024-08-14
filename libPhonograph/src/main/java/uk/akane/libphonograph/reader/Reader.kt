@@ -152,7 +152,7 @@ object Reader {
         val root = if (shouldLoadFilesystem) MiscUtils.FileNodeImpl<T>("storage") else null
         val shallowRoot = if (shouldLoadFolders) MiscUtils.FileNodeImpl<T>("shallow") else null
         val songs = mutableListOf<T>()
-        val albumMap = if (shouldLoadAlbums) hashMapOf<Long?, AlbumImpl<T>>() else null
+        val albumMap = if (shouldLoadAlbums) hashMapOf<Long?, MiscUtils.AlbumImpl<T>>() else null
         val artistMap = if (shouldLoadArtists) hashMapOf<Long?, Artist<T>>() else null
         val artistCacheMap = if (shouldLoadAlbums) hashMapOf<String?, Long?>() else null
         val albumArtistMap = if (shouldLoadAlbums)
@@ -342,7 +342,7 @@ object Reader {
                     val artistStr = albumArtist ?: artist
                     val likelyArtist = albumIdToArtistMap?.get(albumId)
                         ?.run { if (second == artistStr) this else null }
-                    AlbumImpl<T>(
+                    MiscUtils.AlbumImpl<T>(
                         albumId,
                         album,
                         artistStr,
@@ -441,14 +441,4 @@ object Reader {
             folders
         )
     }
-
-    data class AlbumImpl<T>(
-        override val id: Long?,
-        override val title: String?,
-        override val albumArtist: String?,
-        override var albumArtistId: Long?,
-        override val albumYear: Int?,
-        override var cover: Uri?,
-        override val songList: MutableList<T>
-    ) : Album<T>
 }

@@ -1,10 +1,12 @@
 package uk.akane.libphonograph.utils
 
 import android.content.Context
+import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
 import uk.akane.libphonograph.ALLOWED_EXT
 import uk.akane.libphonograph.TAG
+import uk.akane.libphonograph.items.Album
 import uk.akane.libphonograph.items.FileNode
 import uk.akane.libphonograph.items.Playlist
 import java.io.File
@@ -139,4 +141,14 @@ object MiscUtils {
         }
         return Pair(playlists, foundPlaylistContent)
     }
+
+    data class AlbumImpl<T>(
+        override val id: Long?,
+        override val title: String?,
+        override val albumArtist: String?,
+        override var albumArtistId: Long?,
+        override val albumYear: Int?,
+        override var cover: Uri?,
+        override val songList: MutableList<T>
+    ) : Album<T>
 }
