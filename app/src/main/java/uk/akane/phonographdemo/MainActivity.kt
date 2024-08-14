@@ -18,11 +18,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import uk.akane.libphonograph.constructor.ItemConstructor
 import uk.akane.libphonograph.hasScopedStorageV2
 import uk.akane.libphonograph.hasScopedStorageWithMediaTypes
 import uk.akane.libphonograph.reader.Reader
-import uk.akane.libphonograph.reader.ReaderConfiguration
 import uk.akane.libphonograph.reader.ReaderResult
 import kotlin.system.measureTimeMillis
 
@@ -30,7 +28,6 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val PERMISSION_READ_MEDIA_AUDIO = 100
-        private const val TAG = "PhonographDemo"
     }
     
     private lateinit var recyclerView: RecyclerView
@@ -87,69 +84,6 @@ class MainActivity : AppCompatActivity() {
             fetchData()
         }
     }
-
-    private val readerConfiguration = ReaderConfiguration(
-        ItemConstructor { uri, mediaId, mimeType, title, writer, compilation,
-                          composer, artist, albumTitle, albumArtist, artworkUri,
-                          cdTrackNumber, trackNumber, discNumber, genre,
-                          recordingDay, recordingMonth, recordingYear, releaseYear,
-                          artistId, albumId, genreId, author, addDate,
-                          duration, modifiedDate ->
-            return@ItemConstructor MediaItem
-                .Builder()
-                .setUri(uri)
-                .setMediaId(mediaId.toString())
-                .setMimeType(mimeType)
-                .setMediaMetadata(
-                    MediaMetadata
-                        .Builder()
-                        .setIsBrowsable(false)
-                        .setIsPlayable(true)
-                        .setTitle(title)
-                        .setWriter(writer)
-                        .setCompilation(compilation)
-                        .setComposer(composer)
-                        .setArtist(artist)
-                        .setAlbumTitle(albumTitle)
-                        .setAlbumArtist(albumArtist)
-                        .setArtworkUri(artworkUri)
-                        .setTrackNumber(trackNumber)
-                        .setDiscNumber(discNumber)
-                        .setGenre(genre)
-                        .setRecordingDay(recordingDay)
-                        .setRecordingMonth(recordingMonth)
-                        .setRecordingYear(recordingYear)
-                        .setReleaseYear(releaseYear)
-                        .setExtras(Bundle().apply {
-                            if (artistId != null) {
-                                putLong("ArtistId", artistId)
-                            }
-                            if (albumId != null) {
-                                putLong("AlbumId", albumId)
-                            }
-                            if (genreId != null) {
-                                putLong("GenreId", genreId)
-                            }
-                            putString("Author", author)
-                            if (addDate != null) {
-                                putLong("AddDate", addDate)
-                            }
-                            if (duration != null) {
-                                putLong("Duration", duration)
-                            }
-                            if (modifiedDate != null) {
-                                putLong("ModifiedDate", modifiedDate)
-                            }
-                            cdTrackNumber?.toIntOrNull()
-                                ?.let { it1 -> putInt("CdTrackNumber", it1) }
-                        })
-                        .build(),
-                ).build()
-        },
-        shouldFetchPlaylist = true,
-        shouldIncludeExtraFormat = true
-    )
-
     @SuppressLint("StringFormatMatches")
     private fun showPrompt() {
         MaterialAlertDialogBuilder(this)
@@ -159,10 +93,10 @@ class MainActivity : AppCompatActivity() {
                 getString(
                     R.string.prompt_str,
                     result!!.songList.size,
-                    result!!.albumList.size,
-                    result!!.artistList.size,
-                    result!!.playlistList.size,
-                    result!!.folders.size,
+                    result!!.albumList!!.size,
+                    result!!.artistList!!.size,
+                    result!!.playlistList!!.size,
+                    result!!.folders!!.size,
                     lastResultTime
                 ))
             .setPositiveButton(R.string.ok, null)
@@ -179,7 +113,64 @@ class MainActivity : AppCompatActivity() {
             lastResultTime = measureTimeMillis {
                 result = Reader.readFromMediaStore(
                     this@MainActivity,
-                    readerConfiguration
+                    { uri, mediaId, mimeType, title, writer, compilation,
+                      composer, artist, albumTitle, albumArtist, artworkUri,
+                      cdTrackNumber, trackNumber, discNumber, genre,
+                      recordingDay, recordingMonth, recordingYear, releaseYear,
+                      artistId, albumId, genreId, author, addDate,
+                      duration, modifiedDate ->
+                        return@readFromMediaStore MediaItem
+                            .Builder()
+                            .setUri(uri)
+                            .setMediaId(mediaId.toString())
+                            .setMimeType(mimeType)
+                            .setMediaMetadata(
+                                MediaMetadata
+                                    .Builder()
+                                    .setIsBrowsable(false)
+                                    .setIsPlayable(true)
+                                    .setTitle(title)
+                                    .setWriter(writer)
+                                    .setCompilation(compilation)
+                                    .setComposer(composer)
+                                    .setArtist(artist)
+                                    .setAlbumTitle(albumTitle)
+                                    .setAlbumArtist(albumArtist)
+                                    .setArtworkUri(artworkUri)
+                                    .setTrackNumber(trackNumber)
+                                    .setDiscNumber(discNumber)
+                                    .setGenre(genre)
+                                    .setRecordingDay(recordingDay)
+                                    .setRecordingMonth(recordingMonth)
+                                    .setRecordingYear(recordingYear)
+                                    .setReleaseYear(releaseYear)
+                                    .setExtras(Bundle().apply {
+                                        if (artistId != null) {
+                                            putLong("ArtistId", artistId)
+                                        }
+                                        if (albumId != null) {
+                                            putLong("AlbumId", albumId)
+                                        }
+                                        if (genreId != null) {
+                                            putLong("GenreId", genreId)
+                                        }
+                                        putString("Author", author)
+                                        if (addDate != null) {
+                                            putLong("AddDate", addDate)
+                                        }
+                                        if (duration != null) {
+                                            putLong("Duration", duration)
+                                        }
+                                        if (modifiedDate != null) {
+                                            putLong("ModifiedDate", modifiedDate)
+                                        }
+                                        cdTrackNumber?.toIntOrNull()
+                                            ?.let { it1 -> putInt("CdTrackNumber", it1) }
+                                    })
+                                    .build(),
+                            ).build()
+                    },
+                    shouldLoadPlaylists = true
                 )
             }
             withContext(Dispatchers.Main) {

@@ -26,7 +26,7 @@ object MiscUtils {
         }
     }
 
-    inline fun <reified T> handleMediaFolder(path: String, rootNode: FileNode<T>): FileNode<T> {
+    fun <T> handleMediaFolder(path: String, rootNode: FileNode<T>): FileNode<T> {
         val newPath = if (path.endsWith('/')) path.substring(1, path.length - 1)
         else path.substring(1)
         val splitPath = newPath.split('/')
@@ -42,7 +42,7 @@ object MiscUtils {
         return node
     }
 
-    inline fun <reified T> handleShallowMediaItem(
+    fun <T> handleShallowMediaItem(
         mediaItem: T,
         albumId: Long?,
         path: String,
@@ -60,8 +60,7 @@ object MiscUtils {
         folder.addSong(mediaItem, albumId)
     }
 
-    @Suppress("NOTHING_TO_INLINE")
-    inline fun findBestCover(songFolder: File): File? {
+    fun findBestCover(songFolder: File): File? {
         var bestScore = 0
         var bestFile: File? = null
         try {
@@ -97,7 +96,7 @@ object MiscUtils {
         return null
     }
 
-    inline fun <reified T> fetchPlaylists(context: Context):
+    fun <T> fetchPlaylists(context: Context):
             Pair<List<Pair<Playlist<T>, MutableList<Long>>>, Boolean> {
         var foundPlaylistContent = false
         val playlists = mutableListOf<Pair<Playlist<T>, MutableList<Long>>>()

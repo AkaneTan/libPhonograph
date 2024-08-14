@@ -60,14 +60,18 @@ object Reader {
             }
     }
 
-    inline fun <reified T> readFromMediaStore(
+    // TODO try enabling inline when it stops generating kotlin errors in the demo app :'D
+    fun <T> readFromMediaStore(
         context: Context,
-        itemConstructor: (uri: Uri, mediaId: Long, mimeType: String, title: String, writer: String?,
-        compilation: String?, composer: String?, artist: String?, albumTitle: String?,
-        albumArtist: String?, artworkUri: Uri, cdTrackNumber: String?, trackNumber: Int?,
-        discNumber: Int?, genre: String?, recordingDay: Int?, recordingMonth: Int?,
-        recordingYear: Int?, releaseYear: Int?, artistId: Long?, albumId: Long?,
-        genreId: Long?, author: String?, addDate: Long?, duration: Long?, modifiedDate: Long?) -> T,
+        itemConstructor: (uri: Uri, mediaId: Long, mimeType: String, title: String,
+                                      writer: String?, compilation: String?, composer: String?,
+                                      artist: String?, albumTitle: String?, albumArtist: String?,
+                                      artworkUri: Uri, cdTrackNumber: String?, trackNumber: Int?,
+                                      discNumber: Int?, genre: String?, recordingDay: Int?,
+                                      recordingMonth: Int?, recordingYear: Int?, releaseYear: Int?,
+                                      artistId: Long?, albumId: Long?, genreId: Long?,
+                                      author: String?, addDate: Long?, duration: Long?,
+                                      modifiedDate: Long?) -> T,
         minSongLengthSeconds: Long = 0,
         blackListSet: Set<String> = setOf(),
         shouldUseEnhancedCoverReading: Boolean? = false, // null means load if permission is granted
@@ -290,7 +294,7 @@ object Reader {
                 }
 
                 // Build our mediaItem.
-                val song = itemConstructor(
+                val song = itemConstructor.invoke(
                     pathFile.toUri(),
                     id,
                     mimeType,
