@@ -18,10 +18,11 @@ import uk.akane.libphonograph.hasScopedStorageWithMediaTypes
 import uk.akane.libphonograph.items.Album
 import uk.akane.libphonograph.items.Artist
 import uk.akane.libphonograph.items.Date
+import uk.akane.libphonograph.items.FileNode
 import uk.akane.libphonograph.items.Genre
 import uk.akane.libphonograph.items.Playlist
 import uk.akane.libphonograph.putIfAbsentSupport
-import uk.akane.libphonograph.utils.MiscUtils.FileNode
+import uk.akane.libphonograph.utils.MiscUtils
 import uk.akane.libphonograph.utils.MiscUtils.fetchPlaylists
 import uk.akane.libphonograph.utils.MiscUtils.findBestCover
 import uk.akane.libphonograph.utils.MiscUtils.handleMediaFolder
@@ -148,8 +149,8 @@ object Reader {
                         context.hasImagePermission())))
             hashMapOf<Long, Pair<File, FileNode<T>>>() else null
         val folders = if (shouldLoadFolders) hashSetOf<String>() else null
-        val root = if (shouldLoadFilesystem) FileNode<T>("storage") else null
-        val shallowRoot = if (shouldLoadFolders) FileNode<T>("shallow") else null
+        val root = if (shouldLoadFilesystem) MiscUtils.FileNodeImpl<T>("storage") else null
+        val shallowRoot = if (shouldLoadFolders) MiscUtils.FileNodeImpl<T>("shallow") else null
         val songs = mutableListOf<T>()
         val albumMap = if (shouldLoadAlbums) hashMapOf<Long?, AlbumImpl<T>>() else null
         val artistMap = if (shouldLoadArtists) hashMapOf<Long?, Artist<T>>() else null
@@ -374,7 +375,7 @@ object Reader {
                 }?.songList?.add(song)
                 if (shouldLoadFilesystem) {
                     val fn = handleMediaFolder(path, root!!)
-                    fn.addSong(song, albumId)
+                    (fn as MiscUtils.FileNodeImpl<T>).addSong(song, albumId)
                     if (albumId != null) {
                         coverCache?.putIfAbsentSupport(albumId, Pair(pathFile.parentFile!!, fn))
                     }

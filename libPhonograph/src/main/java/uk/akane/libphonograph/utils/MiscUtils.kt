@@ -5,16 +5,17 @@ import android.provider.MediaStore
 import android.util.Log
 import uk.akane.libphonograph.ALLOWED_EXT
 import uk.akane.libphonograph.TAG
+import uk.akane.libphonograph.items.FileNode
 import uk.akane.libphonograph.items.Playlist
 import java.io.File
 
 object MiscUtils {
-    class FileNode<T> (
-        val folderName: String
-    ) {
-        val folderList = hashMapOf<String, FileNode<T>>()
-        val songList = mutableListOf<T>()
-        var albumId: Long? = null
+    class FileNodeImpl<T>(
+        override val folderName: String
+    ) : FileNode<T> {
+        override val folderList = hashMapOf<String, FileNode<T>>()
+        override val songList = mutableListOf<T>()
+        override var albumId: Long? = null
             private set
         fun addSong(item: T, id: Long?) {
             if (albumId != null && id != albumId) {
@@ -34,7 +35,7 @@ object MiscUtils {
         for (fld in splitPath.subList(0, splitPath.size - 1)) {
             var newNode = node.folderList[fld]
             if (newNode == null) {
-                newNode = FileNode(fld)
+                newNode = FileNodeImpl(fld)
                 node.folderList[newNode.folderName] = newNode
             }
             node = newNode
@@ -54,10 +55,10 @@ object MiscUtils {
         val lastFolderName = splitPath[splitPath.size - 2]
         var folder = shallowFolder.folderList[lastFolderName]
         if (folder == null) {
-            folder = FileNode(lastFolderName)
+            folder = FileNodeImpl(lastFolderName)
             shallowFolder.folderList[folder.folderName] = folder
         }
-        folder.addSong(mediaItem, albumId)
+        (folder as FileNodeImpl<T>).addSong(mediaItem, albumId)
     }
 
     fun findBestCover(songFolder: File): File? {

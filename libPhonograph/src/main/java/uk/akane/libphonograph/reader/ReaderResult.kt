@@ -3,9 +3,9 @@ package uk.akane.libphonograph.reader
 import uk.akane.libphonograph.items.Album
 import uk.akane.libphonograph.items.Artist
 import uk.akane.libphonograph.items.Date
+import uk.akane.libphonograph.items.FileNode
 import uk.akane.libphonograph.items.Genre
 import uk.akane.libphonograph.items.Playlist
-import uk.akane.libphonograph.utils.MiscUtils.FileNode
 
 data class ReaderResult<T>(
     val songList: MutableList<T>,
