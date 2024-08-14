@@ -415,10 +415,10 @@ object Reader {
                             ?: throw NotFoundException("Playlist contains song not found: $value")
                     })
                 }
-            }?.toMutableList() ?: mutableListOf()
+            }?.toMutableList() ?: if (recentlyAddedMap != null) mutableListOf() else null
 
         if (recentlyAddedMap != null) {
-            playlistsFinal.add(
+            playlistsFinal!!.add(
                 RecentlyAdded(
                     (System.currentTimeMillis() / 1000) - recentlyAddedFilterSecond,
                     recentlyAddedMap
