@@ -64,7 +64,7 @@ object Reader {
     // TODO try enabling inline when it stops generating kotlin errors in the demo app :'D
     fun <T> readFromMediaStore(
         context: Context,
-        itemConstructor: (uri: Uri, mediaId: Long, mimeType: String, title: String,
+        itemConstructor: (uri: Uri?, mediaId: Long, mimeType: String, title: String,
                                       writer: String?, compilation: String?, composer: String?,
                                       artist: String?, albumTitle: String?, albumArtist: String?,
                                       artworkUri: Uri, cdTrackNumber: String?, trackNumber: Int?,
@@ -236,12 +236,12 @@ object Reader {
             val modifiedDateColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED)
 
             while (it.moveToNext()) {
-                val path = it.getStringOrNull(pathColumn) ?: continue
+                val path = it.getStringOrNull(pathColumn)
                 val duration = it.getLongOrNull(durationColumn)
-                val pathFile = File(path)
-                val fldPath = pathFile.parentFile!!.absolutePath
+                val pathFile = path?.let { it1 -> File(it1) }
+                val fldPath = pathFile?.parentFile?.absolutePath
                 val skip = (duration != null && duration < minSongLengthSeconds * 1000) ||
-                        blackListSet.contains(fldPath)
+                        (fldPath == null || blackListSet.contains(fldPath))
                 // We need to add blacklisted songs to idMap as they can be referenced by playlist
                 if (skip && !foundPlaylistContent) continue
                 val id = it.getLongOrNull(idColumn)!!
@@ -296,7 +296,7 @@ object Reader {
 
                 // Build our mediaItem.
                 val song = itemConstructor.invoke(
-                    pathFile.toUri(),
+                    pathFile?.toUri(),
                     id,
                     mimeType,
                     title,
@@ -374,15 +374,15 @@ object Reader {
                     )
                 }?.songList?.add(song)
                 if (shouldLoadFilesystem) {
-                    val fn = handleMediaFolder(path, root!!)
+                    val fn = handleMediaFolder(path!!, root!!)
                     (fn as MiscUtils.FileNodeImpl<T>).addSong(song, albumId)
                     if (albumId != null) {
-                        coverCache?.putIfAbsentSupport(albumId, Pair(pathFile.parentFile!!, fn))
+                        coverCache?.putIfAbsentSupport(albumId, Pair(pathFile!!.parentFile!!, fn))
                     }
                 }
                 if (shouldLoadFolders) {
-                    handleShallowMediaItem(song, albumId, path, shallowRoot!!)
-                    folders!!.add(fldPath)
+                    handleShallowMediaItem(song, albumId, path!!, shallowRoot!!)
+                    folders!!.add(fldPath!!)
                 }
             }
         }
