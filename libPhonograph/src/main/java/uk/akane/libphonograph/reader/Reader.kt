@@ -409,10 +409,10 @@ object Reader {
         val dateList = dateMap?.values?.toMutableList()
         val playlistsFinal = playlists?.map {
                 it.first.also { playlist ->
-                    playlist.songList.addAll(it.second.map { value ->
+                    playlist.songList.addAll(it.second.mapNotNull { value ->
                         idMap!![value]
-                            // if this happens it's 100% of time a library (or MediaStore?) bug
-                            ?: throw NotFoundException("Playlist contains song not found: $value")
+                        // if value is null it's 100% of time a library (or MediaStore?) bug
+                        // and because I found the MediaStore bug in the wild, don't be so stingy
                     })
                 }
             }?.toMutableList() ?: if (recentlyAddedMap != null) mutableListOf() else null
