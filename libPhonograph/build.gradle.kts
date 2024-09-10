@@ -37,6 +37,12 @@ android {
         jvmTarget = "17"
     }
 
+    buildTypes {
+        create("profiling") {
+            isMinifyEnabled = false
+        }
+    }
+
     publishing {
         singleVariant("release") {
             withSourcesJar()
