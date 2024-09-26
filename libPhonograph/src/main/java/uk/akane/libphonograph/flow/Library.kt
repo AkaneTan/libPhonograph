@@ -47,11 +47,11 @@ class Library(context: Context,
 			if (!context.hasAudioPermission()) {
 				throw SecurityException("Audio permission is not granted")
 			}
-			if (shouldUseEnhancedCoverReading == true && hasScopedStorageWithMediaTypes() &&
-				!context.hasImagePermission()
-			) {
-				throw SecurityException("Requested enhanced cover reading but permission isn't granted")
-			}
+//			if (shouldUseEnhancedCoverReading == true && hasScopedStorageWithMediaTypes() &&
+//				!context.hasImagePermission()
+//			) {
+//				throw SecurityException("Requested enhanced cover reading but permission isn't granted")
+//			}
 
 			// TODO register callback
 			awaitClose { /* TODO */ }
