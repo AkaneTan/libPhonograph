@@ -239,8 +239,9 @@ object Reader {
                 val duration = it.getLongOrNull(durationColumn)
                 val pathFile = path?.let { it1 -> File(it1) }
                 val fldPath = pathFile?.parentFile?.absolutePath
-                val skip = (duration != null && duration < minSongLengthSeconds * 1000) ||
-                        (fldPath == null || blackListSet.contains(fldPath))
+                val skip = (duration != null && duration != 0L &&
+                        duration < minSongLengthSeconds * 1000) || (fldPath == null
+                        || blackListSet.contains(fldPath))
                 // We need to add blacklisted songs to idMap as they can be referenced by playlist
                 if (skip && !foundPlaylistContent) continue
                 val id = it.getLongOrNull(idColumn)!!
