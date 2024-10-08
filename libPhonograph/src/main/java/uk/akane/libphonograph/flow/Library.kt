@@ -15,9 +15,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import uk.akane.libphonograph.hasAudioPermission
-import uk.akane.libphonograph.hasImagePermission
 import uk.akane.libphonograph.hasImprovedMediaStore
-import uk.akane.libphonograph.hasScopedStorageWithMediaTypes
 
 class Library(context: Context,
               extraFormatsFlow: SharedFlow<Boolean>,

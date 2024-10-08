@@ -7,7 +7,6 @@ import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.os.Binder
-import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast

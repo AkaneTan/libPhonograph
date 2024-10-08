@@ -18,7 +18,6 @@ object MiscUtils {
         override val folderList = hashMapOf<String, FileNode<T>>()
         override val songList = mutableListOf<T>()
         override var albumId: Long? = null
-            private set
         fun addSong(item: T, id: Long?) {
             if (albumId != null && id != albumId) {
                 albumId = null

@@ -2,7 +2,6 @@ package uk.akane.libphonograph.reader
 
 import android.content.ContentUris
 import android.content.Context
-import android.content.res.Resources.NotFoundException
 import android.net.Uri
 import android.provider.MediaStore
 import androidx.core.database.getIntOrNull
