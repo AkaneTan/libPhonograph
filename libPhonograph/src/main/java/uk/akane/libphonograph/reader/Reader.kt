@@ -331,9 +331,9 @@ object Reader {
                 if (addDate != null) {
                     recentlyAddedMap?.add(Pair(addDate, song))
                 }
-                artistMap?.getOrPut(artistId) {
+                (artistMap?.getOrPut(artistId) {
                     Artist(artistId, artist, mutableListOf(), mutableListOf())
-                }?.songList?.add(song)
+                }?.songList as MutableList?)?.add(song)
                 artistCacheMap?.putIfAbsentSupport(artist, artistId)
                 albumMap?.getOrPut(albumId) {
                     // in enhanced cover loading case, cover uri is created later using coverCache
@@ -363,21 +363,20 @@ object Reader {
                         Pair(mutableListOf(), mutableListOf())
                     }?.second?.add(song)
                 }?.songList?.add(song)
-                genreMap?.getOrPut(genre) { Genre(genreId, genre, mutableListOf()) }?.songList?.add(
-                    song
-                )
-                dateMap?.getOrPut(year) {
+                (genreMap?.getOrPut(genre) { Genre(genreId, genre, mutableListOf()) }?.songList
+                        as MutableList?)?.add(song)
+                (dateMap?.getOrPut(year) {
                     Date(
                         year?.toLong() ?: 0,
                         year?.toString(),
                         mutableListOf()
                     )
-                }?.songList?.add(song)
+                }?.songList as MutableList?)?.add(song)
                 if (shouldLoadFilesystem) {
-                    val fn = handleMediaFolder(path!!, root!!)
+                    val fn = handleMediaFolder(path, root!!)
                     (fn as MiscUtils.FileNodeImpl<T>).addSong(song, albumId)
                     if (albumId != null) {
-                        coverCache?.putIfAbsentSupport(albumId, Pair(pathFile!!.parentFile!!, fn))
+                        coverCache?.putIfAbsentSupport(albumId, Pair(pathFile.parentFile!!, fn))
                     }
                 }
                 if (shouldLoadFolders) {
@@ -392,7 +391,7 @@ object Reader {
             if (it.albumArtistId == null) {
                 it.albumArtistId = artistCacheMap!![it.albumArtist]
             }
-            artistMap?.get(it.albumArtistId)?.albumList?.add(it)
+            (artistMap?.get(it.albumArtistId)?.albumList as MutableList?)?.add(it)
             // coverCache == null if !haveImgPerm
             coverCache?.get(it.id)?.let { p ->
                 // if this is false, folder contains >1 albums
@@ -408,13 +407,7 @@ object Reader {
         val genreList = genreMap?.values?.toMutableList()
         val dateList = dateMap?.values?.toMutableList()
         val playlistsFinal = playlists?.map {
-                it.first.also { playlist ->
-                    playlist.songList.addAll(it.second.mapNotNull { value ->
-                        idMap!![value]
-                        // if value is null it's 100% of time a library (or MediaStore?) bug
-                        // and because I found the MediaStore bug in the wild, don't be so stingy
-                    })
-                }
+                it.toPlaylist(idMap)
             }?.toMutableList() ?: if (recentlyAddedMap != null) mutableListOf() else null
 
         if (recentlyAddedMap != null) {

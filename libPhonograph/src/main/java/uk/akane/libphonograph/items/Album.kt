@@ -5,7 +5,7 @@ import android.net.Uri
 interface Album<T> : Item<T> {
 	override val id: Long?
 	override val title: String?
-	override val songList: MutableList<T>
+	override val songList: List<T>
 	val albumArtist: String?
 	val albumArtistId: Long?
 	val albumYear: Int?

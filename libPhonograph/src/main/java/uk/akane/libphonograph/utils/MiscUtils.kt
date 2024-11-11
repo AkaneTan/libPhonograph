@@ -37,7 +37,7 @@ object MiscUtils {
             var newNode = node.folderList[fld]
             if (newNode == null) {
                 newNode = FileNodeImpl(fld)
-                node.folderList[newNode.folderName] = newNode
+                (node.folderList as HashMap)[newNode.folderName] = newNode
             }
             node = newNode
         }
@@ -54,10 +54,10 @@ object MiscUtils {
         val splitPath = newPath.split('/')
         if (splitPath.size < 2) throw IllegalArgumentException("splitPath.size < 2: $newPath")
         val lastFolderName = splitPath[splitPath.size - 2]
-        var folder = shallowFolder.folderList[lastFolderName]
+        var folder = (shallowFolder.folderList as HashMap)[lastFolderName]
         if (folder == null) {
             folder = FileNodeImpl(lastFolderName)
-            shallowFolder.folderList[folder.folderName] = folder
+            (shallowFolder.folderList as HashMap)[folder.folderName] = folder
         }
         (folder as FileNodeImpl<T>).addSong(mediaItem, albumId)
     }
@@ -99,9 +99,9 @@ object MiscUtils {
     }
 
     fun <T> fetchPlaylists(context: Context):
-            Pair<List<Pair<Playlist<T>, MutableList<Long>>>, Boolean> {
+            Pair<List<RawPlaylist<T>>, Boolean> {
         var foundPlaylistContent = false
-        val playlists = mutableListOf<Pair<Playlist<T>, MutableList<Long>>>()
+        val playlists = mutableListOf<RawPlaylist<T>>()
         context.contentResolver.query(
             @Suppress("DEPRECATION")
             MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI, arrayOf(
@@ -134,11 +134,25 @@ object MiscUtils {
                         content.add(cursor.getLong(column))
                     }
                 }
-                val playlist = Playlist<T>(playlistId, playlistName, mutableListOf())
-                playlists.add(Pair(playlist, content))
+                playlists.add(RawPlaylist<T>(playlistId, playlistName, content))
             }
         }
         return Pair(playlists, foundPlaylistContent)
+    }
+
+    data class RawPlaylist<T>(
+        val id: Long?,
+        val title: String?,
+        val songList: List<Long>
+    ) {
+        // idMap may be null if and only if all playlists are empty
+        fun toPlaylist(idMap: Map<Long, T>?): Playlist<T> {
+            return Playlist(id, title, songList.mapNotNull { value ->
+                idMap!![value]
+                // if song is null it's 100% of time a library (or MediaStore?) bug
+                // and because I found the MediaStore bug in the wild, don't be so stingy
+            }.toMutableList()) // TODO remove .toMutableList()
+        }
     }
 
     data class AlbumImpl<T>(

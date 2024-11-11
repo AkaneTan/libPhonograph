@@ -8,13 +8,13 @@ import uk.akane.libphonograph.items.Genre
 import uk.akane.libphonograph.items.Playlist
 
 data class ReaderResult<T>(
-    val songList: MutableList<T>,
-    val albumList: MutableList<Album<T>>?,
-    val albumArtistList: MutableList<Artist<T>>?,
-    val artistList: MutableList<Artist<T>>?,
-    val genreList: MutableList<Genre<T>>?,
-    val dateList: MutableList<Date<T>>?,
-    val playlistList: MutableList<Playlist<T>>?,
+    val songList: List<T>,
+    val albumList: List<Album<T>>?,
+    val albumArtistList: List<Artist<T>>?,
+    val artistList: List<Artist<T>>?,
+    val genreList: List<Genre<T>>?,
+    val dateList: List<Date<T>>?,
+    val playlistList: List<Playlist<T>>?,
     val folderStructure: FileNode<T>?,
     val shallowFolder: FileNode<T>?,
     val folders: Set<String>?

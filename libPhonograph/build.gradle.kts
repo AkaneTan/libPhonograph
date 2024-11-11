@@ -52,5 +52,4 @@ android {
 
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.media3:media3-common:1.4.1")
 }
