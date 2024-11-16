@@ -1,8 +1,10 @@
 package uk.akane.libphonograph.items
 
-data class Artist<T>(
+import androidx.media3.common.MediaItem
+
+data class Artist(
     override val id: Long?,
     override val title: String?,
-    override val songList: List<T>,
-    val albumList: List<Album<T>>
-) : Item<T>
+    override val songList: List<MediaItem>,
+    val albumList: List<Album>
+) : Item

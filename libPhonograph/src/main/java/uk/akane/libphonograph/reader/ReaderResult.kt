@@ -1,5 +1,6 @@
 package uk.akane.libphonograph.reader
 
+import androidx.media3.common.MediaItem
 import uk.akane.libphonograph.items.Album
 import uk.akane.libphonograph.items.Artist
 import uk.akane.libphonograph.items.Date
@@ -7,15 +8,28 @@ import uk.akane.libphonograph.items.FileNode
 import uk.akane.libphonograph.items.Genre
 import uk.akane.libphonograph.items.Playlist
 
-data class ReaderResult<T>(
-    val songList: List<T>,
-    val albumList: List<Album<T>>?,
-    val albumArtistList: List<Artist<T>>?,
-    val artistList: List<Artist<T>>?,
-    val genreList: List<Genre<T>>?,
-    val dateList: List<Date<T>>?,
-    val playlistList: List<Playlist<T>>?,
-    val folderStructure: FileNode<T>?,
-    val shallowFolder: FileNode<T>?,
+data class ReaderResult(
+    val songList: List<MediaItem>,
+    val albumList: List<Album>?,
+    val albumArtistList: List<Artist>?,
+    val artistList: List<Artist>?,
+    val genreList: List<Genre>?,
+    val dateList: List<Date>?,
+    val idMap: Map<Long, MediaItem>?, // used for converting RawPlaylist to Playlist
+    val folderStructure: FileNode?,
+    val shallowFolder: FileNode?,
     val folders: Set<String>?
+)
+
+data class SimpleReaderResult(
+    val songList: List<MediaItem>,
+    val albumList: List<Album>,
+    val albumArtistList: List<Artist>,
+    val artistList: List<Artist>,
+    val genreList: List<Genre>,
+    val dateList: List<Date>,
+    val playlistList: List<Playlist>,
+    val folderStructure: FileNode,
+    val shallowFolder: FileNode,
+    val folders: Set<String>
 )

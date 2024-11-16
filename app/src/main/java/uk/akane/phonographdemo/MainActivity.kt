@@ -111,64 +111,8 @@ class MainActivity : AppCompatActivity() {
         coroutineScope?.cancel()
         coroutineScope = CoroutineScope(Dispatchers.IO).launch {
             lastResultTime = measureTimeMillis {
-                result = Reader.readFromMediaStore(
-                    this@MainActivity,
-                    { uri, mediaId, mimeType, title, writer, compilation,
-                      composer, artist, albumTitle, albumArtist, artworkUri,
-                      cdTrackNumber, trackNumber, discNumber, genre,
-                      recordingDay, recordingMonth, recordingYear, releaseYear,
-                      artistId, albumId, genreId, author, addDate,
-                      duration, modifiedDate ->
-                        return@readFromMediaStore MediaItem
-                            .Builder()
-                            .setUri(uri)
-                            .setMediaId(mediaId.toString())
-                            .setMimeType(mimeType)
-                            .setMediaMetadata(
-                                MediaMetadata
-                                    .Builder()
-                                    .setIsBrowsable(false)
-                                    .setIsPlayable(true)
-                                    .setTitle(title)
-                                    .setWriter(writer)
-                                    .setCompilation(compilation)
-                                    .setComposer(composer)
-                                    .setArtist(artist)
-                                    .setAlbumTitle(albumTitle)
-                                    .setAlbumArtist(albumArtist)
-                                    .setArtworkUri(artworkUri)
-                                    .setTrackNumber(trackNumber)
-                                    .setDiscNumber(discNumber)
-                                    .setGenre(genre)
-                                    .setRecordingDay(recordingDay)
-                                    .setRecordingMonth(recordingMonth)
-                                    .setRecordingYear(recordingYear)
-                                    .setReleaseYear(releaseYear)
-                                    .setDurationMs(duration)
-                                    .setExtras(Bundle().apply {
-                                        if (artistId != null) {
-                                            putLong("ArtistId", artistId)
-                                        }
-                                        if (albumId != null) {
-                                            putLong("AlbumId", albumId)
-                                        }
-                                        if (genreId != null) {
-                                            putLong("GenreId", genreId)
-                                        }
-                                        putString("Author", author)
-                                        if (addDate != null) {
-                                            putLong("AddDate", addDate)
-                                        }
-                                        if (modifiedDate != null) {
-                                            putLong("ModifiedDate", modifiedDate)
-                                        }
-                                        cdTrackNumber?.toIntOrNull()
-                                            ?.let { it1 -> putInt("CdTrackNumber", it1) }
-                                    })
-                                    .build(),
-                            ).build()
-                    },
-                    shouldLoadPlaylists = true
+                result = SimpleReader.readFromMediaStore(
+                    this@MainActivity
                 )
             }
             withContext(Dispatchers.Main) {

@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
+import androidx.media3.common.MediaItem
 import uk.akane.libphonograph.ALLOWED_EXT
 import uk.akane.libphonograph.TAG
 import uk.akane.libphonograph.items.Album
@@ -12,13 +13,13 @@ import uk.akane.libphonograph.items.Playlist
 import java.io.File
 
 object MiscUtils {
-    class FileNodeImpl<T>(
+    class FileNodeImpl(
         override val folderName: String
-    ) : FileNode<T> {
-        override val folderList = hashMapOf<String, FileNode<T>>()
-        override val songList = mutableListOf<T>()
+    ) : FileNode {
+        override val folderList = hashMapOf<String, FileNode>()
+        override val songList = mutableListOf<MediaItem>()
         override var albumId: Long? = null
-        fun addSong(item: T, id: Long?) {
+        fun addSong(item: MediaItem, id: Long?) {
             if (albumId != null && id != albumId) {
                 albumId = null
             } else if (albumId == null && songList.isEmpty()) {
@@ -28,11 +29,11 @@ object MiscUtils {
         }
     }
 
-    fun <T> handleMediaFolder(path: String, rootNode: FileNode<T>): FileNode<T> {
+    fun handleMediaFolder(path: String, rootNode: FileNode): FileNode {
         val newPath = if (path.endsWith('/')) path.substring(1, path.length - 1)
         else path.substring(1)
         val splitPath = newPath.split('/')
-        var node: FileNode<T> = rootNode
+        var node: FileNode = rootNode
         for (fld in splitPath.subList(0, splitPath.size - 1)) {
             var newNode = node.folderList[fld]
             if (newNode == null) {
@@ -44,11 +45,11 @@ object MiscUtils {
         return node
     }
 
-    fun <T> handleShallowMediaItem(
-        mediaItem: T,
+    fun handleShallowMediaItem(
+        mediaItem: MediaItem,
         albumId: Long?,
         path: String,
-        shallowFolder: FileNode<T>
+        shallowFolder: FileNode
     ) {
         val newPath = if (path.endsWith('/')) path.substring(0, path.length - 1) else path
         val splitPath = newPath.split('/')
@@ -59,7 +60,7 @@ object MiscUtils {
             folder = FileNodeImpl(lastFolderName)
             (shallowFolder.folderList as HashMap)[folder.folderName] = folder
         }
-        (folder as FileNodeImpl<T>).addSong(mediaItem, albumId)
+        (folder as FileNodeImpl).addSong(mediaItem, albumId)
     }
 
     fun findBestCover(songFolder: File): File? {
@@ -98,70 +99,13 @@ object MiscUtils {
         return null
     }
 
-    fun <T> fetchPlaylists(context: Context):
-            Pair<List<RawPlaylist<T>>, Boolean> {
-        var foundPlaylistContent = false
-        val playlists = mutableListOf<RawPlaylist<T>>()
-        context.contentResolver.query(
-            @Suppress("DEPRECATION")
-            MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI, arrayOf(
-                @Suppress("DEPRECATION") MediaStore.Audio.Playlists._ID,
-                @Suppress("DEPRECATION") MediaStore.Audio.Playlists.NAME
-            ), null, null, null
-        )?.use {
-            val playlistIdColumn = it.getColumnIndexOrThrow(
-                @Suppress("DEPRECATION") MediaStore.Audio.Playlists._ID
-            )
-            val playlistNameColumn = it.getColumnIndexOrThrow(
-                @Suppress("DEPRECATION") MediaStore.Audio.Playlists.NAME
-            )
-            while (it.moveToNext()) {
-                val playlistId = it.getLong(playlistIdColumn)
-                val playlistName = it.getString(playlistNameColumn)?.ifEmpty { null }
-                val content = mutableListOf<Long>()
-                context.contentResolver.query(
-                    @Suppress("DEPRECATION") MediaStore.Audio
-                        .Playlists.Members.getContentUri("external", playlistId), arrayOf(
-                        @Suppress("DEPRECATION") MediaStore.Audio.Playlists.Members.AUDIO_ID,
-                    ), null, null, @Suppress("DEPRECATION")
-                    MediaStore.Audio.Playlists.Members.PLAY_ORDER + " ASC"
-                )?.use { cursor ->
-                    val column = cursor.getColumnIndexOrThrow(
-                        @Suppress("DEPRECATION") MediaStore.Audio.Playlists.Members.AUDIO_ID
-                    )
-                    while (cursor.moveToNext()) {
-                        foundPlaylistContent = true
-                        content.add(cursor.getLong(column))
-                    }
-                }
-                playlists.add(RawPlaylist<T>(playlistId, playlistName, content))
-            }
-        }
-        return Pair(playlists, foundPlaylistContent)
-    }
-
-    data class RawPlaylist<T>(
-        val id: Long?,
-        val title: String?,
-        val songList: List<Long>
-    ) {
-        // idMap may be null if and only if all playlists are empty
-        fun toPlaylist(idMap: Map<Long, T>?): Playlist<T> {
-            return Playlist(id, title, songList.mapNotNull { value ->
-                idMap!![value]
-                // if song is null it's 100% of time a library (or MediaStore?) bug
-                // and because I found the MediaStore bug in the wild, don't be so stingy
-            }.toMutableList()) // TODO remove .toMutableList()
-        }
-    }
-
-    data class AlbumImpl<T>(
+    data class AlbumImpl(
         override val id: Long?,
         override val title: String?,
         override val albumArtist: String?,
         override var albumArtistId: Long?,
         override val albumYear: Int?,
         override var cover: Uri?,
-        override val songList: MutableList<T>
-    ) : Album<T>
+        override val songList: MutableList<MediaItem>
+    ) : Album
 }

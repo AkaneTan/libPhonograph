@@ -1,8 +1,10 @@
 package uk.akane.libphonograph.items
 
-interface FileNode<T> {
+import androidx.media3.common.MediaItem
+
+interface FileNode {
 	val folderName: String
-	val folderList: Map<String, FileNode<T>>
-	val songList: List<T>
+	val folderList: Map<String, FileNode>
+	val songList: List<MediaItem>
 	val albumId: Long?
 }

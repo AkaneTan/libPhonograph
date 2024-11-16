@@ -1,7 +1,9 @@
 package uk.akane.libphonograph.items
 
-interface Item<T> {
+import androidx.media3.common.MediaItem
+
+interface Item {
     val id: Long?
     val title: String?
-    val songList: List<T>
+    val songList: List<MediaItem>
 }
