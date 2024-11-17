@@ -140,7 +140,7 @@ class FlowReader(
             else
                 null
         }
-    private val mappedPlaylistsFlow = rawPlaylistFlow.combine(idMapFlow) { rawPlaylists, idMap ->
+    private val mappedPlaylistsFlow = idMapFlow.combine(rawPlaylistFlow) { idMap, rawPlaylists ->
         rawPlaylists.map { it.toPlaylist(idMap) }
     }
     private val albumListFlowMutable = MutableSharedFlow<List<Album>>(replay = 1)
