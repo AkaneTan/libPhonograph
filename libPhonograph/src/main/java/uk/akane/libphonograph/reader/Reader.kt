@@ -202,7 +202,7 @@ object Reader {
                         duration < minSongLengthSeconds * 1000) || (fldPath == null
                         || blackListSet.contains(fldPath))
                 // We need to add blacklisted songs to idMap as they can be referenced by playlist
-                if (skip && !shouldLoadIdMap) continue
+                if (skip && idMap == null) continue
                 val id = it.getLongOrNull(idColumn)!!
                 val title = it.getStringOrNull(titleColumn)!!
                 val artist = it.getStringOrNull(artistColumn)
@@ -251,14 +251,14 @@ object Reader {
                 }
                 // Process track numbers that have disc number added on.
                 // e.g. 1001 - Disc 01, Track 01
-                if (trackNumber != null && trackNumber >= 1000) {
+                if ((discNumber == null || discNumber == 0) && trackNumber != null &&
+                    trackNumber >= 1000) {
                     discNumber = trackNumber / 1000
                     trackNumber %= 1000
                 }
 
                 // Build our mediaItem.
-                val song = MediaItem
-                    .Builder()
+                val song = MediaItem.Builder()
                     .setUri(pathFile?.toUri())
                     .setMediaId(id.toString())
                     .setMimeType(mimeType)
@@ -267,6 +267,7 @@ object Reader {
                             .Builder()
                             .setIsBrowsable(false)
                             .setIsPlayable(true)
+                            .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
                             .setDurationMs(duration)
                             .setTitle(title)
                             .setWriter(writer)

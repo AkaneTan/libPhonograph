@@ -1,19 +1,16 @@
 package uk.akane.libphonograph.utils
 
-import android.content.Context
 import android.net.Uri
-import android.provider.MediaStore
 import android.util.Log
 import androidx.media3.common.MediaItem
+import java.io.File
 import uk.akane.libphonograph.ALLOWED_EXT
 import uk.akane.libphonograph.TAG
 import uk.akane.libphonograph.items.Album
 import uk.akane.libphonograph.items.FileNode
-import uk.akane.libphonograph.items.Playlist
-import java.io.File
 
 object MiscUtils {
-    class FileNodeImpl(
+    data class FileNodeImpl(
         override val folderName: String
     ) : FileNode {
         override val folderList = hashMapOf<String, FileNode>()

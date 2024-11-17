@@ -8,3 +8,11 @@ interface FileNode {
 	val songList: List<MediaItem>
 	val albumId: Long?
 }
+
+object EmptyFileNode : FileNode {
+	override val folderName: String
+		get() = ""
+	override val folderList = mapOf<String, FileNode>()
+	override val songList = listOf<MediaItem>()
+	override val albumId = null
+}

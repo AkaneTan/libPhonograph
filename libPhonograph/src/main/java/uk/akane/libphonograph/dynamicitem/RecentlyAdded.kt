@@ -31,4 +31,22 @@ class RecentlyAdded(minAddDate: Long, songList: List<MediaItem>) : Playlist(-1, 
                 listOf()
         }
     }
+
+    override fun hashCode(): Int {
+        var result = rawList.hashCode()
+        result = 31 * result + minAddDate.hashCode()
+        return result
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as RecentlyAdded
+
+        if (rawList != other.rawList) return false
+        if (minAddDate != other.minAddDate) return false
+
+        return true
+    }
 }
