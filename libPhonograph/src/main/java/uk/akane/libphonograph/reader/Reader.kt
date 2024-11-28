@@ -251,7 +251,9 @@ object Reader {
                 }
                 // Process track numbers that have disc number added on.
                 // e.g. 1001 - Disc 01, Track 01
-                if ((discNumber == null || discNumber == 0) && trackNumber != null &&
+                // MediaStore encodes info this way even if the file does not
+                if (trackNumber != null &&
+                    (discNumber == null || discNumber == 0 || discNumber == trackNumber / 1000) && 
                     trackNumber >= 1000) {
                     discNumber = trackNumber / 1000
                     trackNumber %= 1000
