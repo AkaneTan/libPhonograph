@@ -139,6 +139,7 @@ object MiscUtils {
         override var albumArtist: String?,
         override var albumArtistId: Long?,
         override var cover: Uri?,
+        override var albumYear: Int?,
         override val songList: MutableList<MediaItem>
     ) : Album
 }

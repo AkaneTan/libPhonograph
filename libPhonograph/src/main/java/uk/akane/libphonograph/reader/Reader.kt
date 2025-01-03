@@ -345,6 +345,7 @@ object Reader {
                         null,
                         null,
                         cover,
+                        null,
                         mutableListOf()
                     )
                 }?.songList?.add(song)
@@ -378,6 +379,7 @@ object Reader {
             val artistFound = findBestAlbumArtist(it.songList, artistCacheMap!!)
             it.albumArtist = artistFound?.first
             it.albumArtistId = artistFound?.second
+            it.albumYear = it.songList.mapNotNull { it.mediaMetadata.releaseYear }.maxOrNull()
             (albumArtistMap?.getOrPut(it.albumArtistId) {
                 Artist(it.albumArtistId, it.albumArtist, mutableListOf(), mutableListOf())
             }?.albumList as MutableList?)?.add(it)
