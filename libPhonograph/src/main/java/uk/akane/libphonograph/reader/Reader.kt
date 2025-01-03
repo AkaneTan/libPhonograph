@@ -42,7 +42,12 @@ import uk.akane.libphonograph.items.EXTRA_MODIFIED_DATE
 import uk.akane.libphonograph.items.RawPlaylist
 
 object Reader {
+    // not actually defined in API, but CTS tested
+    // https://cs.android.com/android/platform/superproject/main/+/main:packages/providers/MediaProvider/src/com/android/providers/media/LocalUriMatcher.java;drc=ddf0d00b2b84b205a2ab3581df8184e756462e8d;l=182
     private val baseCoverUri = Uri.parse("content://media/external/audio/albumart")
+    private const val MEDIA_ALBUM_ART = "albumart"
+
+    private val trackNumberRegex = Regex("^([0-9]+)\\..*$")
     private val projection =
         arrayListOf(
             MediaStore.Audio.Media._ID,
@@ -205,8 +210,12 @@ object Reader {
                 if (skip && idMap == null) continue
                 val id = it.getLongOrNull(idColumn)!!
                 val title = it.getStringOrNull(titleColumn)!!
-                val artist = it.getStringOrNull(artistColumn)
-                    .let { v -> if (v == "<unknown>") null else v }
+                val artist: String?
+                val hasNoMetadata: Boolean
+                it.getStringOrNull(artistColumn).let {
+                    hasNoMetadata = it == MediaStore.UNKNOWN_STRING || it == null
+                    artist = if (hasNoMetadata) null else it
+                }
                 val album = it.getStringOrNull(albumColumn)
                 val albumArtist = it.getStringOrNull(albumArtistColumn)
                 val year = it.getIntOrNull(yearColumn).let { v -> if (v == 0) null else v }
@@ -241,12 +250,26 @@ object Reader {
                 } else null
                 val imgUri = ContentUris.appendId(
                     MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.buildUpon(), id
-                ).appendPath("albumart").build()
+                ).appendPath(MEDIA_ALBUM_ART).build()
 
                 if (cdTrackNumber != null && trackNumber == null) {
                     cdTrackNumber.toIntOrNull()?.let {
                         trackNumber = it
                         cdTrackNumber = null
+                    }
+                }
+                // If there is no track number metadata set by now, and the file name is something
+                // along the lines of "04.Englishman in New York.mp3" or "04. La isla bonita.flac",
+                // AND either:
+                // - there is no valid track metadata (this means the title is the filename without
+                //   extension)
+                // - there is valid track metadata, and the title doesn't begin with that number
+                // we can assume this is referring to the track number.
+                if (trackNumber == null && pathFile != null) {
+                    val match = trackNumberRegex.matchEntire(pathFile.name)
+                    if (match != null && match.groups.size > 1
+                        && (hasNoMetadata || !title.startsWith(match.groups[1]!!.value))) {
+                        trackNumber = match.groups[1]!!.value.toIntOrNull()
                     }
                 }
                 // Process track numbers that have disc number added on.
