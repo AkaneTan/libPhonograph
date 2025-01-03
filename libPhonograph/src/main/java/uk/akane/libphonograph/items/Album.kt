@@ -9,6 +9,5 @@ interface Album : Item {
 	override val songList: List<MediaItem>
 	val albumArtist: String?
 	val albumArtistId: Long?
-	val albumYear: Int?
 	val cover: Uri?
 }

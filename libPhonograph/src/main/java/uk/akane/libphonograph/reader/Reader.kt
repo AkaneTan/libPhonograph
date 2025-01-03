@@ -14,7 +14,6 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.util.UnstableApi
 import uk.akane.libphonograph.getColumnIndexOrNull
-import uk.akane.libphonograph.hasAlbumArtistIdInMediaStore
 import uk.akane.libphonograph.hasAudioPermission
 import uk.akane.libphonograph.hasImagePermission
 import uk.akane.libphonograph.hasImprovedMediaStore
@@ -27,6 +26,7 @@ import uk.akane.libphonograph.items.Genre
 import uk.akane.libphonograph.putIfAbsentSupport
 import uk.akane.libphonograph.utils.MiscUtils
 import uk.akane.libphonograph.utils.MiscUtils.findBestCover
+import uk.akane.libphonograph.utils.MiscUtils.findBestAlbumArtist
 import uk.akane.libphonograph.utils.MiscUtils.handleMediaFolder
 import uk.akane.libphonograph.utils.MiscUtils.handleShallowMediaItem
 import java.io.File
@@ -37,7 +37,6 @@ import uk.akane.libphonograph.items.EXTRA_ALBUM_ID
 import uk.akane.libphonograph.items.EXTRA_ARTIST_ID
 import uk.akane.libphonograph.items.EXTRA_AUTHOR
 import uk.akane.libphonograph.items.EXTRA_CD_TRACK_NUMBER
-import uk.akane.libphonograph.items.EXTRA_GENRE_ID
 import uk.akane.libphonograph.items.EXTRA_MODIFIED_DATE
 import uk.akane.libphonograph.items.RawPlaylist
 
@@ -55,6 +54,11 @@ object Reader {
             MediaStore.Audio.Media.ARTIST,
             MediaStore.Audio.Media.ARTIST_ID,
             MediaStore.Audio.Media.ALBUM,
+            // There is no way to get an ID for the album artist.
+            // The MediaStore.Audio.Albums.ARTIST_ID in fact is an arbitrary _song_ artist ID
+            // from a random song from the album. Which random song? Decided by SQLite - it's not
+            // specified in the view query creation.
+            // https://cs.android.com/android/platform/superproject/main/+/main:packages/providers/MediaProvider/src/com/android/providers/media/DatabaseHelper.java;drc=907c4754ff300c413dd0a178245f859b82393d4d;l=1624
             MediaStore.Audio.Media.ALBUM_ARTIST,
             MediaStore.Audio.Media.DATA,
             MediaStore.Audio.Media.YEAR,
@@ -78,6 +82,26 @@ object Reader {
             }
         }.toTypedArray()
 
+    /*
+     * This takes the approach of reading all song columns and inferring collections such as:
+     * - albums
+     * - genres
+     * - years
+     * - artists
+     * from the music metadata. MediaStore has built-in support for these collections, however,
+     * in modern MediaStore versions, these are just SQL views of the audio table we access anyway.
+     * Using the built-in collections would allow us to lazy-load songs only when displaying them,
+     * instead of keeping potentially thousands of songs' metadata in RAM. However, we would be
+     * forced to take collection metadata at face value and could not do some informed decisions on
+     * how to interpret it, which is bad for albums:
+     * - The ARTIST/ARTIST_ID columns on an Album are actually populated using a random song's data.
+     * - Album covers are populated using a random song's cover
+     * This approach allows us to:
+     * - Choose album artist based on math (at least 80% of songs with artist) or album artist tag
+     * - Choose album cover from folder if only one album is inside that folder
+     * - Back-reference albums from the correct _album_ artist, not a song artist
+     * without much hassle.
+     */
     @OptIn(UnstableApi::class)
     fun readFromMediaStore(
         context: Context,
@@ -127,34 +151,12 @@ object Reader {
         val albumMap = if (shouldLoadAlbums) hashMapOf<Long?, MiscUtils.AlbumImpl>() else null
         val artistMap = if (shouldLoadArtists) hashMapOf<Long?, Artist>() else null
         val artistCacheMap = if (shouldLoadAlbums) hashMapOf<String?, Long?>() else null
-        val albumArtistMap = if (shouldLoadAlbums)
-            hashMapOf<String?, Pair<MutableList<Album>, MutableList<MediaItem>>>() else null
+        val albumArtistMap = if (shouldLoadAlbums) hashMapOf<Long?, Artist>() else null
         // Note: it has been observed on a user's Pixel(!) that MediaStore assigned 3 different IDs
-        // for "Unknown genre" (null genre tag), hence we practically ignore genre IDs as key
+        // for "Unknown genre" (null genre tag), and genres are simple - like dates - same name
+        // means it's the same genre. That's why we completely ignore genre IDs.
         val genreMap = if (shouldLoadGenres) hashMapOf<String?, Genre>() else null
         val dateMap = if (shouldLoadDates) hashMapOf<Int?, Date>() else null
-        val albumIdToArtistMap = if (hasAlbumArtistIdInMediaStore()) {
-            val map = hashMapOf<Long, Pair<Long, String?>>()
-            context.contentResolver.query(
-                MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI, arrayOf(
-                    MediaStore.Audio.Albums._ID,
-                    MediaStore.Audio.Albums.ARTIST, MediaStore.Audio.Albums.ARTIST_ID
-                ), null, null, null
-            )?.use {
-                val idColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
-                val artistColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
-                val artistIdColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST_ID)
-                while (it.moveToNext()) {
-                    val artistId = it.getLongOrNull(artistIdColumn)
-                    if (artistId != null) {
-                        val id = it.getLong(idColumn)
-                        val artistName = it.getStringOrNull(artistColumn)?.ifEmpty { null }
-                        map[id] = Pair(artistId, artistName)
-                    }
-                }
-            }
-            map
-        } else null
         val idMap = if (shouldLoadIdMap) hashMapOf<Long, MediaItem>() else null
         val cursor = context.contentResolver.query(
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
@@ -180,8 +182,6 @@ object Reader {
             val trackNumberColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)
             val genreColumn = if (hasImprovedMediaStore())
                 it.getColumnIndexOrThrow(MediaStore.Audio.Media.GENRE) else null
-            val genreIdColumn = if (hasImprovedMediaStore())
-                it.getColumnIndexOrThrow(MediaStore.Audio.Media.GENRE_ID) else null
             val cdTrackNumberColumn = if (hasImprovedMediaStore())
                 it.getColumnIndexOrThrow(MediaStore.Audio.Media.CD_TRACK_NUMBER) else null
             val compilationColumn = if (hasImprovedMediaStore())
@@ -231,7 +231,6 @@ object Reader {
                 val writer = writerColumn?.let { col -> it.getStringOrNull(col) }
                 val author = authorColumn?.let { col -> it.getStringOrNull(col) }
                 val genre = genreColumn?.let { col -> it.getStringOrNull(col) }
-                val genreId = genreIdColumn?.let { col -> it.getLongOrNull(col) }
                 val addDate = it.getLongOrNull(addDateColumn)
                 val modifiedDate = it.getLongOrNull(modifiedDateColumn)
                 val dateTakenParsed = if (hasImprovedMediaStore()) {
@@ -316,9 +315,6 @@ object Reader {
                                 if (albumId != null) {
                                     putLong(EXTRA_ALBUM_ID, albumId)
                                 }
-                                if (genreId != null) {
-                                    putLong(EXTRA_GENRE_ID, genreId)
-                                }
                                 putString(EXTRA_AUTHOR, author)
                                 if (addDate != null) {
                                     putLong(EXTRA_ADD_DATE, addDate)
@@ -343,31 +339,16 @@ object Reader {
                     // in enhanced cover loading case, cover uri is created later using coverCache
                     val cover = if (coverCache != null || albumId == null) null else
                             ContentUris.withAppendedId(baseCoverUri, albumId)
-                    val artistStr = albumArtist ?: artist
-                    val likelyArtist = albumIdToArtistMap?.get(albumId)
-                        ?.run { if (second == artistStr) this else null }
                     MiscUtils.AlbumImpl(
                         albumId,
                         album,
-                        artistStr,
-                        likelyArtist?.first,
-                        year,
+                        null,
+                        null,
                         cover,
                         mutableListOf()
-                    ).also { alb ->
-                        albumArtistMap?.getOrPut(artistStr) {
-                            Pair(
-                                mutableListOf(),
-                                mutableListOf()
-                            )
-                        }?.first?.add(alb)
-                    }
-                }?.also { alb ->
-                    albumArtistMap?.getOrPut(alb.albumArtist) {
-                        Pair(mutableListOf(), mutableListOf())
-                    }?.second?.add(song)
+                    )
                 }?.songList?.add(song)
-                (genreMap?.getOrPut(genre) { Genre(genreId, genre, mutableListOf()) }?.songList
+                (genreMap?.getOrPut(genre) { Genre(genre.hashCode().toLong(), genre, mutableListOf()) }?.songList
                         as MutableList?)?.add(song)
                 (dateMap?.getOrPut(year) {
                     Date(
@@ -392,9 +373,14 @@ object Reader {
 
         // Parse all the lists.
         val albumList = albumMap?.values?.onEach {
-            if (it.albumArtistId == null) {
-                it.albumArtistId = artistCacheMap!![it.albumArtist]
-            }
+            if (it.albumArtistId != null || it.albumArtist != null)
+                throw IllegalStateException("code bug? failed: it.albumArtistId != null || it.albumArtist != null")
+            val artistFound = findBestAlbumArtist(it.songList, artistCacheMap!!)
+            it.albumArtist = artistFound?.first
+            it.albumArtistId = artistFound?.second
+            (albumArtistMap?.getOrPut(it.albumArtistId) {
+                Artist(it.albumArtistId, it.albumArtist, mutableListOf(), mutableListOf())
+            }?.albumList as MutableList?)?.add(it)
             (artistMap?.get(it.albumArtistId)?.albumList as MutableList?)?.add(it)
             // coverCache == null if !useEnhancedCoverReading
             coverCache?.get(it.id)?.let { p ->
@@ -405,9 +391,7 @@ object Reader {
             }
         }?.toList<Album>()
         val artistList = artistMap?.values?.toList()
-        val albumArtistList = albumArtistMap?.entries?.map { (artist, albumsAndSongs) ->
-            Artist(artistCacheMap!![artist], artist, albumsAndSongs.second, albumsAndSongs.first)
-        }?.toList()
+        val albumArtistList = albumArtistMap?.values?.toList()
         val genreList = genreMap?.values?.toList()
         val dateList = dateMap?.values?.toList()
 

@@ -8,6 +8,7 @@ import uk.akane.libphonograph.ALLOWED_EXT
 import uk.akane.libphonograph.TAG
 import uk.akane.libphonograph.items.Album
 import uk.akane.libphonograph.items.FileNode
+import uk.akane.libphonograph.items.artistId
 
 object MiscUtils {
     data class FileNodeImpl(
@@ -74,12 +75,12 @@ object MiscUtils {
                     "png" -> score += 2
                     "jpeg" -> score += 1
                 }
-                if (file.nameWithoutExtension == "albumart") score += 24
-                else if (file.nameWithoutExtension == "cover") score += 20
-                else if (file.nameWithoutExtension.startsWith("albumart")) score += 16
-                else if (file.nameWithoutExtension.startsWith("cover")) score += 12
-                else if (file.nameWithoutExtension.contains("albumart")) score += 8
-                else if (file.nameWithoutExtension.contains("cover")) score += 4
+                if (file.nameWithoutExtension.contentEquals("albumart", true)) score += 24
+                else if (file.nameWithoutExtension.contentEquals("cover", true)) score += 20
+                else if (file.nameWithoutExtension.startsWith("albumart", true)) score += 16
+                else if (file.nameWithoutExtension.startsWith("cover", true)) score += 12
+                else if (file.nameWithoutExtension.contains("albumart", true)) score += 8
+                else if (file.nameWithoutExtension.contains("cover", true)) score += 4
                 if (bestScore < score) {
                     bestScore = score
                     bestFile = file
@@ -96,12 +97,47 @@ object MiscUtils {
         return null
     }
 
+    fun findBestAlbumArtist(songs: List<MediaItem>, artistToIdMap: Map<String?, Long?>): Pair<String, Long?>? {
+        val foundAlbumArtists = songs.map { it.mediaMetadata.albumArtist?.toString() }
+            .groupBy { it }.mapValues { it.value.size }
+        if (foundAlbumArtists.size > 2
+            || (foundAlbumArtists.size == 2 && !foundAlbumArtists.containsKey(null))) {
+            Log.w(TAG, "Odd, album artists: $foundAlbumArtists for one album exceed 1, " +
+                    "MediaStore usually doesn't do that")
+            return null
+        }
+        val theAlbumArtist = foundAlbumArtists.keys.find { it != null }
+        if (theAlbumArtist != null) {
+            // We got at least one album artist tag.
+            val countWithNull = foundAlbumArtists[null] ?: 0
+            val countWithAlbumArtist = foundAlbumArtists[theAlbumArtist]!!
+            if (countWithAlbumArtist < countWithNull) return null
+            return Pair(
+                theAlbumArtist,
+                // If the album artist made some song on the album, using the ID from the song will be
+                // more accurate than just using any ID which matches the name. Well, it's a best guess.
+                songs.firstOrNull { it.mediaMetadata.artist == theAlbumArtist }?.mediaMetadata?.artistId
+                    ?: artistToIdMap[theAlbumArtist]
+            )
+        } else {
+            // Meh, let's guess based on artist tag.
+            val foundArtists = songs.map { it.mediaMetadata.artist?.toString() }
+                .groupBy { it }.mapValues { it.value.size }.entries.sortedByDescending { it.value }
+            val bestMatch = foundArtists.firstOrNull() ?: return null
+            if (bestMatch.key == null) return null
+            // If less than 60% of songs have said artist, we can't reasonably assume the best match
+            // is the actual album artist.
+            if ((bestMatch.value.toFloat() / songs.size) < 0.6f) return null
+            // Let's go with this.
+            return Pair(bestMatch.key!!, artistToIdMap[bestMatch.key])
+        }
+    }
+
     data class AlbumImpl(
         override val id: Long?,
         override val title: String?,
-        override val albumArtist: String?,
+        override var albumArtist: String?,
         override var albumArtistId: Long?,
-        override val albumYear: Int?,
         override var cover: Uri?,
         override val songList: MutableList<MediaItem>
     ) : Album

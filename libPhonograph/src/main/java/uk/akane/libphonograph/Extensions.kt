@@ -128,11 +128,6 @@ inline fun Cursor.getColumnIndexOrNull(columnName: String): Int? =
 inline fun hasImprovedMediaStore(): Boolean =
     Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
 
-@ChecksSdkIntAtLeast(api = Build.VERSION_CODES.Q)
-@Suppress("NOTHING_TO_INLINE")
-inline fun hasAlbumArtistIdInMediaStore(): Boolean =
-    Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
-
 @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.R)
 @Suppress("NOTHING_TO_INLINE")
 inline fun hasScopedStorageV2(): Boolean =
