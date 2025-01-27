@@ -43,7 +43,7 @@ import uk.akane.libphonograph.items.RawPlaylist
 object Reader {
     // not actually defined in API, but CTS tested
     // https://cs.android.com/android/platform/superproject/main/+/main:packages/providers/MediaProvider/src/com/android/providers/media/LocalUriMatcher.java;drc=ddf0d00b2b84b205a2ab3581df8184e756462e8d;l=182
-    private val baseCoverUri = Uri.parse("content://media/external/audio/albumart")
+    private val baseCoverUri = "content://media/external/audio/albumart".toUri()
     private const val MEDIA_ALBUM_ART = "albumart"
 
     private val trackNumberRegex = Regex("^([0-9]+)\\..*$")
@@ -194,13 +194,13 @@ object Reader {
                 it.getColumnIndexOrThrow(MediaStore.Audio.Media.WRITER) else null
             val authorColumn = if (hasImprovedMediaStore())
                 it.getColumnIndexOrThrow(MediaStore.Audio.Media.AUTHOR) else null
-            val durationColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
+            val durationColumn = it.getColumnIndexOrNull(MediaStore.Audio.Media.DURATION)
             val addDateColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED)
             val modifiedDateColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED)
 
             while (it.moveToNext()) {
                 val path = it.getStringOrNull(pathColumn)
-                val duration = it.getLongOrNull(durationColumn)
+                val duration = durationColumn?.let { it1 -> it.getLongOrNull(it1) }
                 val pathFile = path?.let { it1 -> File(it1) }
                 val fldPath = pathFile?.parentFile?.absolutePath
                 val skip = (duration != null && duration != 0L &&
