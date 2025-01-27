@@ -2,7 +2,6 @@ package uk.akane.libphonograph.reader
 
 import android.content.ContentUris
 import android.content.Context
-import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import androidx.annotation.OptIn
@@ -194,13 +193,13 @@ object Reader {
                 it.getColumnIndexOrThrow(MediaStore.Audio.Media.WRITER) else null
             val authorColumn = if (hasImprovedMediaStore())
                 it.getColumnIndexOrThrow(MediaStore.Audio.Media.AUTHOR) else null
-            val durationColumn = it.getColumnIndexOrNull(MediaStore.Audio.Media.DURATION)
+            val durationColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
             val addDateColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED)
             val modifiedDateColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED)
 
             while (it.moveToNext()) {
                 val path = it.getStringOrNull(pathColumn)
-                val duration = durationColumn?.let { it1 -> it.getLongOrNull(it1) }
+                val duration = it.getLongOrNull(durationColumn)
                 val pathFile = path?.let { it1 -> File(it1) }
                 val fldPath = pathFile?.parentFile?.absolutePath
                 val skip = (duration != null && duration != 0L &&
