@@ -2,6 +2,7 @@ package uk.akane.libphonograph.reader
 
 import android.content.ContentUris
 import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import androidx.annotation.OptIn
@@ -31,6 +32,9 @@ import uk.akane.libphonograph.utils.MiscUtils.handleShallowMediaItem
 import java.io.File
 import java.time.Instant
 import java.time.ZoneId
+import uk.akane.libphonograph.getIntOrNullIfThrow
+import uk.akane.libphonograph.getLongOrNullIfThrow
+import uk.akane.libphonograph.getStringOrNullIfThrow
 import uk.akane.libphonograph.items.EXTRA_ADD_DATE
 import uk.akane.libphonograph.items.EXTRA_ALBUM_ID
 import uk.akane.libphonograph.items.EXTRA_ARTIST_ID
@@ -164,6 +168,9 @@ object Reader {
             null,
             MediaStore.Audio.Media.TITLE + " COLLATE UNICODE ASC",
         )
+        val defaultZone by lazy { if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            ZoneId.systemDefault()
+        } else null }
 
         cursor?.use {
             // Get columns from mediaStore.
@@ -198,44 +205,45 @@ object Reader {
             val modifiedDateColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED)
 
             while (it.moveToNext()) {
-                val path = it.getStringOrNull(pathColumn)
-                val duration = it.getLongOrNull(durationColumn)
+                val path = it.getStringOrNullIfThrow(pathColumn)
+                val duration = it.getLongOrNullIfThrow(durationColumn)
                 val pathFile = path?.let { it1 -> File(it1) }
-                val fldPath = pathFile?.parentFile?.absolutePath
+                val parent = pathFile?.parentFile
+                val fldPath = parent?.absolutePath
                 val skip = (duration != null && duration != 0L &&
                         duration < minSongLengthSeconds * 1000) || (fldPath == null
                         || blackListSet.contains(fldPath))
                 // We need to add blacklisted songs to idMap as they can be referenced by playlist
                 if (skip && idMap == null) continue
-                val id = it.getLongOrNull(idColumn)!!
-                val title = it.getStringOrNull(titleColumn)!!
+                val id = it.getLongOrNullIfThrow(idColumn)!!
+                val title = it.getStringOrNullIfThrow(titleColumn)!!
                 val artist: String?
                 val hasNoMetadata: Boolean
-                it.getStringOrNull(artistColumn).let {
+                it.getStringOrNullIfThrow(artistColumn).let {
                     hasNoMetadata = it == MediaStore.UNKNOWN_STRING || it == null
                     artist = if (hasNoMetadata) null else it
                 }
-                val album = it.getStringOrNull(albumColumn)
-                val albumArtist = it.getStringOrNull(albumArtistColumn)
-                val year = it.getIntOrNull(yearColumn).let { v -> if (v == 0) null else v }
-                val albumId = it.getLongOrNull(albumIdColumn)
-                val artistId = it.getLongOrNull(artistIdColumn)
-                val mimeType = it.getStringOrNull(mimeTypeColumn)!!
-                var discNumber = discNumberColumn?.let { col -> it.getIntOrNull(col) }
-                var trackNumber = it.getIntOrNull(trackNumberColumn)
-                var cdTrackNumber = cdTrackNumberColumn?.let { col -> it.getStringOrNull(col) }
-                val compilation = compilationColumn?.let { col -> it.getStringOrNull(col) }
-                val dateTaken = dateTakenColumn?.let { col -> it.getStringOrNull(col) }
-                val composer = composerColumn?.let { col -> it.getStringOrNull(col) }
-                val writer = writerColumn?.let { col -> it.getStringOrNull(col) }
-                val author = authorColumn?.let { col -> it.getStringOrNull(col) }
-                val genre = genreColumn?.let { col -> it.getStringOrNull(col) }
-                val addDate = it.getLongOrNull(addDateColumn)
-                val modifiedDate = it.getLongOrNull(modifiedDateColumn)
+                val album = it.getStringOrNullIfThrow(albumColumn)
+                val albumArtist = it.getStringOrNullIfThrow(albumArtistColumn)
+                val year = it.getIntOrNullIfThrow(yearColumn).let { v -> if (v == 0) null else v }
+                val albumId = it.getLongOrNullIfThrow(albumIdColumn)
+                val artistId = it.getLongOrNullIfThrow(artistIdColumn)
+                val mimeType = it.getStringOrNullIfThrow(mimeTypeColumn)!!
+                var discNumber = discNumberColumn?.let { col -> it.getIntOrNullIfThrow(col) }
+                var trackNumber = it.getIntOrNullIfThrow(trackNumberColumn)
+                var cdTrackNumber = cdTrackNumberColumn?.let { col -> it.getStringOrNullIfThrow(col) }
+                val compilation = compilationColumn?.let { col -> it.getStringOrNullIfThrow(col) }
+                val dateTaken = dateTakenColumn?.let { col -> it.getStringOrNullIfThrow(col) }
+                val composer = composerColumn?.let { col -> it.getStringOrNullIfThrow(col) }
+                val writer = writerColumn?.let { col -> it.getStringOrNullIfThrow(col) }
+                val author = authorColumn?.let { col -> it.getStringOrNullIfThrow(col) }
+                val genre = genreColumn?.let { col -> it.getStringOrNullIfThrow(col) }
+                val addDate = it.getLongOrNullIfThrow(addDateColumn)
+                val modifiedDate = it.getLongOrNullIfThrow(modifiedDateColumn)
                 val dateTakenParsed = if (hasImprovedMediaStore()) {
                     // the column exists since R, so we can always use these APIs
                     dateTaken?.toLongOrNull()?.let { it1 -> Instant.ofEpochMilli(it1) }
-                        ?.atZone(ZoneId.systemDefault())
+                        ?.atZone(defaultZone)
                 } else null
                 val dateTakenYear = if (hasImprovedMediaStore()) {
                     dateTakenParsed?.year
@@ -358,14 +366,14 @@ object Reader {
                     )
                 }?.songList as MutableList?)?.add(song)
                 if (shouldLoadFilesystem) {
-                    val fn = handleMediaFolder(path, root!!)
+                    val fn = handleMediaFolder(parent, root!!)
                     (fn as MiscUtils.FileNodeImpl).addSong(song, albumId)
                     if (albumId != null) {
-                        coverCache?.putIfAbsentSupport(albumId, Pair(pathFile.parentFile!!, fn))
+                        coverCache?.putIfAbsentSupport(albumId, Pair(parent, fn))
                     }
                 }
                 if (shouldLoadFolders) {
-                    handleShallowMediaItem(song, albumId, path, shallowRoot!!)
+                    handleShallowMediaItem(song, albumId, parent.name, shallowRoot!!)
                     folders!!.add(fldPath)
                 }
             }

@@ -27,18 +27,17 @@ object MiscUtils {
         }
     }
 
-    fun handleMediaFolder(path: String, rootNode: FileNode): FileNode {
-        val newPath = if (path.endsWith('/')) path.substring(1, path.length - 1)
-        else path.substring(1)
-        val splitPath = newPath.split('/')
+    fun handleMediaFolder(path: File, rootNode: FileNode): FileNode {
+        var f: File? = path
         var node: FileNode = rootNode
-        for (fld in splitPath.subList(0, splitPath.size - 1)) {
-            var newNode = node.folderList[fld]
+        while (f != null) {
+            var newNode = node.folderList[f.name]
             if (newNode == null) {
-                newNode = FileNodeImpl(fld)
+                newNode = FileNodeImpl(f.name)
                 (node.folderList as HashMap)[newNode.folderName] = newNode
             }
             node = newNode
+            f = f.parentFile
         }
         return node
     }
@@ -46,16 +45,12 @@ object MiscUtils {
     fun handleShallowMediaItem(
         mediaItem: MediaItem,
         albumId: Long?,
-        path: String,
+        folderName: String,
         shallowFolder: FileNode
     ) {
-        val newPath = if (path.endsWith('/')) path.substring(0, path.length - 1) else path
-        val splitPath = newPath.split('/')
-        if (splitPath.size < 2) throw IllegalArgumentException("splitPath.size < 2: $newPath")
-        val lastFolderName = splitPath[splitPath.size - 2]
-        var folder = (shallowFolder.folderList as HashMap)[lastFolderName]
+        var folder = (shallowFolder.folderList as HashMap)[folderName]
         if (folder == null) {
-            folder = FileNodeImpl(lastFolderName)
+            folder = FileNodeImpl(folderName)
             (shallowFolder.folderList as HashMap)[folder.folderName] = folder
         }
         (folder as FileNodeImpl).addSong(mediaItem, albumId)

@@ -147,3 +147,27 @@ fun Context.hasAudioPermission() =
 fun Context.hasImagePermission() =
     checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) ==
             PackageManager.PERMISSION_GRANTED
+
+@Suppress("NOTHING_TO_INLINE")
+inline fun Cursor.getStringOrNullIfThrow(index: Int): String? =
+    try {
+        getString(index)
+    } catch (_: Exception) {
+        null
+    }
+
+@Suppress("NOTHING_TO_INLINE")
+inline fun Cursor.getLongOrNullIfThrow(index: Int): Long? =
+    try {
+        getLong(index)
+    } catch (_: Exception) {
+        null
+    }
+
+@Suppress("NOTHING_TO_INLINE")
+inline fun Cursor.getIntOrNullIfThrow(index: Int): Int? =
+    try {
+        getInt(index)
+    } catch (_: Exception) {
+        null
+    }

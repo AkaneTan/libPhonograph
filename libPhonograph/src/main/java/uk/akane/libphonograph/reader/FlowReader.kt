@@ -53,7 +53,7 @@ class FlowReader(
     // IMPORTANT: Do not use distinctUntilChanged() or StateFlow here because equals() on thousands
     // of MediaItems is very, very expensive!
     private var awaitingRefresh = false
-    private val scope = CoroutineScope(Dispatchers.IO.limitedParallelism(1))
+    private val scope = CoroutineScope(Dispatchers.IO)
     private val finishRefreshTrigger = MutableSharedFlow<Unit>(replay = 0)
     private val manualRefreshTrigger = MutableSharedFlow<Unit>(replay = 1)
     init {
