@@ -10,12 +10,13 @@ object SimpleReader {
         blackListSet: Set<String> = setOf(),
         shouldUseEnhancedCoverReading: Boolean? = false, // null means load if permission is granted
         recentlyAddedFilterSecond: Long? = 1_209_600, // null means don't generate recently added
-        shouldIncludeExtraFormat: Boolean = true
+        shouldIncludeExtraFormat: Boolean = true,
+        coverStubUri: String? = null
     ): SimpleReaderResult {
         val (playlists, foundPlaylistContent) = Reader.fetchPlaylists(context)
         val result = Reader.readFromMediaStore(context, minSongLengthSeconds, blackListSet,
             shouldUseEnhancedCoverReading, shouldIncludeExtraFormat,
-            shouldLoadIdMap = foundPlaylistContent)
+            shouldLoadIdMap = foundPlaylistContent, coverStubUri = coverStubUri)
         // We can null assert because we never pass shouldLoad*=false into Reader
         return SimpleReaderResult(
             result.songList,

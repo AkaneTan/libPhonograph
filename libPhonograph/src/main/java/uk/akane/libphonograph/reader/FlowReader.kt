@@ -42,7 +42,8 @@ class FlowReader(
     blackListSetFlow: SharedFlow<Set<String>>,
     shouldUseEnhancedCoverReadingFlow: SharedFlow<Boolean?>, // null means load if permission is granted
     recentlyAddedFilterSecondFlow: SharedFlow<Long?>, // null means don't generate recently added
-    shouldIncludeExtraFormatFlow: SharedFlow<Boolean>
+    shouldIncludeExtraFormatFlow: SharedFlow<Boolean>,
+    coverStubUri: String? = null
 ) {
     constructor(context: Context, configuration: FlowReaderConfiguration) :
             this(context, configuration.minSongLengthSecondsFlow,
@@ -98,7 +99,8 @@ class FlowReader(
                                         minSongLengthSeconds,
                                         blackListSet,
                                         shouldUseEnhancedCoverReading,
-                                        shouldIncludeExtraFormat
+                                        shouldIncludeExtraFormat,
+                                        coverStubUri = coverStubUri
                                     )
                                 }
                             }

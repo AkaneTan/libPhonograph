@@ -2,6 +2,7 @@ package uk.akane.libphonograph.reader
 
 import android.content.ContentUris
 import android.content.Context
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
@@ -46,7 +47,7 @@ import uk.akane.libphonograph.items.RawPlaylist
 object Reader {
     // not actually defined in API, but CTS tested
     // https://cs.android.com/android/platform/superproject/main/+/main:packages/providers/MediaProvider/src/com/android/providers/media/LocalUriMatcher.java;drc=ddf0d00b2b84b205a2ab3581df8184e756462e8d;l=182
-    private val baseCoverUri = "content://media/external/audio/albumart".toUri()
+    val baseCoverUri = "content://media/external/audio/albumart".toUri()
     private const val MEDIA_ALBUM_ART = "albumart"
 
     private val trackNumberRegex = Regex("^([0-9]+)\\..*$")
@@ -118,7 +119,8 @@ object Reader {
         shouldLoadDates: Boolean = true,
         shouldLoadFolders: Boolean = true,
         shouldLoadFilesystem: Boolean = true,
-        shouldLoadIdMap: Boolean = true
+        shouldLoadIdMap: Boolean = true,
+        coverStubUri: String? = null
     ): ReaderResult {
         if (!shouldLoadFilesystem && shouldUseEnhancedCoverReading != false) {
             throw IllegalArgumentException("Enhanced cover loading requires loading filesystem")
@@ -395,7 +397,11 @@ object Reader {
             coverCache?.get(it.id)?.let { p ->
                 // if this is false, folder contains >1 albums
                 if (p.second.albumId == it.id) {
-                    findBestCover(p.first)?.let { f -> it.cover = f.toUri() }
+                    if (coverStubUri != null)
+                        it.cover = Uri.Builder().scheme(coverStubUri)
+                            .authority(it.id.toString()).path(p.first.absolutePath).build()
+                    else
+                        findBestCover(p.first)?.let { f -> it.cover = f.toUri() }
                 }
             }
         }?.toList<Album>()
