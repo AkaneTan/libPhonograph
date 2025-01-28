@@ -9,7 +9,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted.Companion.Eagerly
 import kotlinx.coroutines.flow.SharingStarted.Companion.WhileSubscribed
@@ -45,12 +44,6 @@ class FlowReader(
     shouldIncludeExtraFormatFlow: SharedFlow<Boolean>,
     coverStubUri: String? = null
 ) {
-    constructor(context: Context, configuration: FlowReaderConfiguration) :
-            this(context, configuration.minSongLengthSecondsFlow,
-                configuration.blackListSetFlow,
-                configuration.shouldUseEnhancedCoverReadingFlow,
-                configuration.recentlyAddedFilterSecondFlow,
-                configuration.shouldIncludeExtraFormatFlow)
     // IMPORTANT: Do not use distinctUntilChanged() or StateFlow here because equals() on thousands
     // of MediaItems is very, very expensive!
     private var awaitingRefresh = false
@@ -192,17 +185,4 @@ class FlowReader(
             waiter.join()
         }
     }
-}
-
-class FlowReaderConfiguration(
-    minSongLengthSeconds: Long = 0,
-    blackListSet: Set<String> = setOf(),
-    shouldUseEnhancedCoverReading: Boolean? = false, // null means load if permission is granted
-    recentlyAddedFilterSecond: Long? = 1_209_600, // null means don't generate recently added
-    shouldIncludeExtraFormat: Boolean = true) {
-    val minSongLengthSecondsFlow = MutableStateFlow(minSongLengthSeconds)
-    val blackListSetFlow = MutableStateFlow(blackListSet)
-    val shouldUseEnhancedCoverReadingFlow = MutableStateFlow(shouldUseEnhancedCoverReading)
-    val recentlyAddedFilterSecondFlow = MutableStateFlow(recentlyAddedFilterSecond)
-    val shouldIncludeExtraFormatFlow = MutableStateFlow(shouldIncludeExtraFormat)
 }
