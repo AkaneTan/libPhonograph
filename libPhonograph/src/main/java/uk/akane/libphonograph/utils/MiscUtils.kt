@@ -27,17 +27,17 @@ object MiscUtils {
         }
     }
 
-    fun handleMediaFolder(path: File, rootNode: FileNode): FileNode {
-        var f: File? = path
+    fun handleMediaFolder(path: String, rootNode: FileNode): FileNode {
+        val splitPath = path.substring(1, if (path.endsWith('/'))
+            path.length - 1 else path.length).split('/')
         var node: FileNode = rootNode
-        while (f != null) {
-            var newNode = node.folderList[f.name]
+        for (fld in splitPath) {
+            var newNode = node.folderList[fld]
             if (newNode == null) {
-                newNode = FileNodeImpl(f.name)
+                newNode = FileNodeImpl(fld)
                 (node.folderList as HashMap)[newNode.folderName] = newNode
             }
             node = newNode
-            f = f.parentFile
         }
         return node
     }

@@ -368,7 +368,7 @@ object Reader {
                     )
                 }?.songList as MutableList?)?.add(song)
                 if (shouldLoadFilesystem) {
-                    val fn = handleMediaFolder(parent, root!!)
+                    val fn = handleMediaFolder(fldPath, root!!)
                     (fn as MiscUtils.FileNodeImpl).addSong(song, albumId)
                     if (albumId != null) {
                         coverCache?.putIfAbsentSupport(albumId, Pair(parent, fn))
