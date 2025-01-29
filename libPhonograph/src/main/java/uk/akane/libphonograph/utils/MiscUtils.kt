@@ -11,7 +11,7 @@ import uk.akane.libphonograph.items.FileNode
 import uk.akane.libphonograph.items.artistId
 
 object MiscUtils {
-    data class FileNodeImpl(
+    internal data class FileNodeImpl(
         override val folderName: String
     ) : FileNode {
         override val folderList = hashMapOf<String, FileNode>()
@@ -27,7 +27,7 @@ object MiscUtils {
         }
     }
 
-    fun handleMediaFolder(path: String, rootNode: FileNode): FileNode {
+    internal fun handleMediaFolder(path: String, rootNode: FileNode): FileNode {
         val splitPath = path.substring(1, if (path.endsWith('/'))
             path.length - 1 else path.length).split('/')
         var node: FileNode = rootNode
@@ -42,7 +42,7 @@ object MiscUtils {
         return node
     }
 
-    fun handleShallowMediaItem(
+    internal fun handleShallowMediaItem(
         mediaItem: MediaItem,
         albumId: Long?,
         folderName: String,
@@ -92,7 +92,7 @@ object MiscUtils {
         return null
     }
 
-    fun findBestAlbumArtist(songs: List<MediaItem>, artistToIdMap: Map<String?, Long?>): Pair<String, Long?>? {
+    internal fun findBestAlbumArtist(songs: List<MediaItem>, artistToIdMap: Map<String?, Long?>): Pair<String, Long?>? {
         val foundAlbumArtists = songs.map { it.mediaMetadata.albumArtist?.toString() }
             .groupBy { it }.mapValues { it.value.size }
         if (foundAlbumArtists.size > 2
@@ -128,7 +128,7 @@ object MiscUtils {
         }
     }
 
-    data class AlbumImpl(
+    internal data class AlbumImpl(
         override val id: Long?,
         override val title: String?,
         override var albumArtist: String?,

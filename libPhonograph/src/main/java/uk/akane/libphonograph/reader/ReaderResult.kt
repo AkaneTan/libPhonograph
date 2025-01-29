@@ -4,6 +4,7 @@ import androidx.media3.common.MediaItem
 import uk.akane.libphonograph.items.Album
 import uk.akane.libphonograph.items.Artist
 import uk.akane.libphonograph.items.Date
+import uk.akane.libphonograph.items.EmptyFileNode
 import uk.akane.libphonograph.items.FileNode
 import uk.akane.libphonograph.items.Genre
 import uk.akane.libphonograph.items.Playlist
@@ -19,7 +20,15 @@ data class ReaderResult(
     val folderStructure: FileNode?,
     val shallowFolder: FileNode?,
     val folders: Set<String>?
-)
+) {
+    companion object {
+        fun emptyReaderResult() = ReaderResult(
+            listOf(), listOf(), listOf(), listOf(), listOf(), listOf(),
+            mapOf(),
+            EmptyFileNode, EmptyFileNode,
+            setOf())
+    }
+}
 
 data class SimpleReaderResult(
     val songList: List<MediaItem>,

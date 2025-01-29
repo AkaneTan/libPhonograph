@@ -1,5 +1,11 @@
 package uk.akane.libphonograph
 
-const val TAG = "libPhonograph"
+import androidx.core.net.toUri
 
-val ALLOWED_EXT = listOf("jpg", "png", "jpeg", "bmp", "tiff", "tif", "webp")
+internal const val TAG = "libPhonograph"
+
+internal val ALLOWED_EXT = listOf("jpg", "png", "jpeg", "bmp", "tiff", "tif", "webp")
+
+object Constants {
+    val baseAlbumCoverUri = "content://media/external/audio/albumart".toUri()
+}

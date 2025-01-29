@@ -35,7 +35,7 @@ open class Playlist protected constructor(
     }
 }
 
-data class RawPlaylist(
+internal data class RawPlaylist(
     val id: Long?,
     val title: String?,
     val songList: List<Long>

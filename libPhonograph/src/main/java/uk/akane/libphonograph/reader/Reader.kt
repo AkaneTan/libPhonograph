@@ -7,14 +7,18 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import androidx.annotation.OptIn
-import androidx.core.database.getIntOrNull
-import androidx.core.database.getLongOrNull
-import androidx.core.database.getStringOrNull
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.util.UnstableApi
+import java.io.File
+import java.time.Instant
+import java.time.ZoneId
+import uk.akane.libphonograph.Constants
 import uk.akane.libphonograph.getColumnIndexOrNull
+import uk.akane.libphonograph.getIntOrNullIfThrow
+import uk.akane.libphonograph.getLongOrNullIfThrow
+import uk.akane.libphonograph.getStringOrNullIfThrow
 import uk.akane.libphonograph.hasAudioPermission
 import uk.akane.libphonograph.hasImagePermission
 import uk.akane.libphonograph.hasImprovedMediaStore
@@ -22,32 +26,25 @@ import uk.akane.libphonograph.hasScopedStorageWithMediaTypes
 import uk.akane.libphonograph.items.Album
 import uk.akane.libphonograph.items.Artist
 import uk.akane.libphonograph.items.Date
-import uk.akane.libphonograph.items.FileNode
-import uk.akane.libphonograph.items.Genre
-import uk.akane.libphonograph.putIfAbsentSupport
-import uk.akane.libphonograph.utils.MiscUtils
-import uk.akane.libphonograph.utils.MiscUtils.findBestCover
-import uk.akane.libphonograph.utils.MiscUtils.findBestAlbumArtist
-import uk.akane.libphonograph.utils.MiscUtils.handleMediaFolder
-import uk.akane.libphonograph.utils.MiscUtils.handleShallowMediaItem
-import java.io.File
-import java.time.Instant
-import java.time.ZoneId
-import uk.akane.libphonograph.getIntOrNullIfThrow
-import uk.akane.libphonograph.getLongOrNullIfThrow
-import uk.akane.libphonograph.getStringOrNullIfThrow
 import uk.akane.libphonograph.items.EXTRA_ADD_DATE
 import uk.akane.libphonograph.items.EXTRA_ALBUM_ID
 import uk.akane.libphonograph.items.EXTRA_ARTIST_ID
 import uk.akane.libphonograph.items.EXTRA_AUTHOR
 import uk.akane.libphonograph.items.EXTRA_CD_TRACK_NUMBER
 import uk.akane.libphonograph.items.EXTRA_MODIFIED_DATE
+import uk.akane.libphonograph.items.FileNode
+import uk.akane.libphonograph.items.Genre
 import uk.akane.libphonograph.items.RawPlaylist
+import uk.akane.libphonograph.putIfAbsentSupport
+import uk.akane.libphonograph.utils.MiscUtils
+import uk.akane.libphonograph.utils.MiscUtils.findBestAlbumArtist
+import uk.akane.libphonograph.utils.MiscUtils.findBestCover
+import uk.akane.libphonograph.utils.MiscUtils.handleMediaFolder
+import uk.akane.libphonograph.utils.MiscUtils.handleShallowMediaItem
 
-object Reader {
+internal object Reader {
     // not actually defined in API, but CTS tested
     // https://cs.android.com/android/platform/superproject/main/+/main:packages/providers/MediaProvider/src/com/android/providers/media/LocalUriMatcher.java;drc=ddf0d00b2b84b205a2ab3581df8184e756462e8d;l=182
-    val baseCoverUri = "content://media/external/audio/albumart".toUri()
     private const val MEDIA_ALBUM_ART = "albumart"
 
     private val trackNumberRegex = Regex("^([0-9]+)\\..*$")
@@ -347,7 +344,7 @@ object Reader {
                 albumMap?.getOrPut(albumId) {
                     // in enhanced cover loading case, cover uri is created later using coverCache
                     val cover = if (coverCache != null || albumId == null) null else
-                            ContentUris.withAppendedId(baseCoverUri, albumId)
+                            ContentUris.withAppendedId(Constants.baseAlbumCoverUri, albumId)
                     MiscUtils.AlbumImpl(
                         albumId,
                         album,

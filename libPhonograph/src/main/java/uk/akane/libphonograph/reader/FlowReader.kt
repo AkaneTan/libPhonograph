@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted.Companion.Eagerly
@@ -24,6 +25,7 @@ import uk.akane.libphonograph.collectOtherFlowWhenBeingCollected
 import uk.akane.libphonograph.contentObserverVersioningFlow
 import uk.akane.libphonograph.dynamicitem.RecentlyAdded
 import uk.akane.libphonograph.flowWhileShared
+import uk.akane.libphonograph.hasAudioPermission
 import uk.akane.libphonograph.items.Album
 import uk.akane.libphonograph.items.Artist
 import uk.akane.libphonograph.items.Date
@@ -47,6 +49,8 @@ class FlowReader(
     // IMPORTANT: Do not use distinctUntilChanged() or StateFlow here because equals() on thousands
     // of MediaItems is very, very expensive!
     private var awaitingRefresh = false
+    var hadFirstRefresh = true
+        private set
     private val scope = CoroutineScope(Dispatchers.IO)
     private val finishRefreshTrigger = MutableSharedFlow<Unit>(replay = 0)
     private val manualRefreshTrigger = MutableSharedFlow<Unit>(replay = 1)
@@ -75,7 +79,7 @@ class FlowReader(
                 }
             }
     }
-    private val readerFlow: SharedFlow<ReaderResult> = sharedFlow(scope, replay = 1) { subscriptionCount ->
+    private val readerFlow: Flow<ReaderResult> = sharedFlow(scope, replay = 1) { subscriptionCount ->
         shouldIncludeExtraFormatFlow.distinctUntilChanged().flatMapLatest { shouldIncludeExtraFormat ->
             shouldUseEnhancedCoverReadingFlow.distinctUntilChanged().flatMapLatest { shouldUseEnhancedCoverReading ->
                 minSongLengthSecondsFlow.distinctUntilChanged().flatMapLatest { minSongLengthSeconds ->
@@ -87,14 +91,16 @@ class FlowReader(
                                 // manual refresh may for whatever reason run in background
                                 // but all others shouldn't trigger background runs
                                 manualRefreshTrigger.mapLatest { _ ->
-                                    Reader.readFromMediaStore(
-                                        context,
-                                        minSongLengthSeconds,
-                                        blackListSet,
-                                        shouldUseEnhancedCoverReading,
-                                        shouldIncludeExtraFormat,
-                                        coverStubUri = coverStubUri
-                                    )
+                                    if (context.hasAudioPermission())
+                                        Reader.readFromMediaStore(
+                                            context,
+                                            minSongLengthSeconds,
+                                            blackListSet,
+                                            shouldUseEnhancedCoverReading,
+                                            shouldIncludeExtraFormat,
+                                            coverStubUri = coverStubUri
+                                        )
+                                    else ReaderResult.emptyReaderResult()
                                 }
                             }
                     }
@@ -118,13 +124,14 @@ class FlowReader(
             foldersFlowMutable.emit(it.folders!!)
             finishRefreshTrigger.emit(Unit)
             awaitingRefresh = true
+            hadFirstRefresh = true
         }
     }
     private val idMapFlow = MutableSharedFlow<Map<Long, MediaItem>>(replay = 1)
         .collectOtherFlowWhenBeingCollected(scope, readerFlow)
     private val songListFlowMutable = MutableSharedFlow<List<MediaItem>>(replay = 1)
         .collectOtherFlowWhenBeingCollected(scope, readerFlow)
-    val songListFlow: SharedFlow<List<MediaItem>> = songListFlowMutable
+    val songListFlow: Flow<List<MediaItem>> = songListFlowMutable
     private val recentlyAddedFlow = recentlyAddedFilterSecondFlow.distinctUntilChanged()
         .combine(songListFlowMutable) { recentlyAddedFilterSecond, songList ->
             if (recentlyAddedFilterSecond != null)
@@ -148,11 +155,11 @@ class FlowReader(
         .collectOtherFlowWhenBeingCollected(scope, readerFlow)
     private val dateListFlowMutable = MutableSharedFlow<List<Date>>(replay = 1)
         .collectOtherFlowWhenBeingCollected(scope, readerFlow)
-    val albumListFlow: SharedFlow<List<Album>> = albumListFlowMutable
-    val albumArtistListFlow: SharedFlow<List<Artist>> = albumArtistListFlowMutable
-    val artistListFlow: SharedFlow<List<Artist>> = artistListFlowMutable
-    val genreListFlow: SharedFlow<List<Genre>> = genreListFlowMutable
-    val dateListFlow: SharedFlow<List<Date>> = dateListFlowMutable
+    val albumListFlow: Flow<List<Album>> = albumListFlowMutable
+    val albumArtistListFlow: Flow<List<Artist>> = albumArtistListFlowMutable
+    val artistListFlow: Flow<List<Artist>> = artistListFlowMutable
+    val genreListFlow: Flow<List<Genre>> = genreListFlowMutable
+    val dateListFlow: Flow<List<Date>> = dateListFlowMutable
     val playlistListFlow = mappedPlaylistsFlow.combine(recentlyAddedFlow) { mappedPlaylists, recentlyAdded ->
         if (recentlyAdded != null) mappedPlaylists + recentlyAdded else mappedPlaylists
     }.shareIn(scope, WhileSubscribed(), replay = 1)
@@ -162,9 +169,9 @@ class FlowReader(
         .collectOtherFlowWhenBeingCollected(scope, readerFlow)
     private val foldersFlowMutable = MutableSharedFlow<Set<String>>(replay = 1)
         .collectOtherFlowWhenBeingCollected(scope, readerFlow)
-    val folderStructureFlow: SharedFlow<FileNode> = folderStructureFlowMutable
-    val shallowFolderFlow: SharedFlow<FileNode> = shallowFolderFlowMutable
-    val foldersFlow: SharedFlow<Set<String>> = foldersFlowMutable
+    val folderStructureFlow: Flow<FileNode> = folderStructureFlowMutable
+    val shallowFolderFlow: Flow<FileNode> = shallowFolderFlowMutable
+    val foldersFlow: Flow<Set<String>> = foldersFlowMutable
 
     /**
      * If the library hasn't been loaded yet, forces a load of the library. Otherwise forces a
