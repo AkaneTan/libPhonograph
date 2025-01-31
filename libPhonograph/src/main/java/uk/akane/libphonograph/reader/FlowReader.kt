@@ -75,7 +75,9 @@ class FlowReader(
             .distinctUntilChanged()
             .flatMapLatest {
                 manualRefreshTrigger.mapLatest { _ ->
-                    Reader.fetchPlaylists(context).first
+                    if (context.hasAudioPermission())
+                        Reader.fetchPlaylists(context).first
+                    else emptyList()
                 }
             }
     }
