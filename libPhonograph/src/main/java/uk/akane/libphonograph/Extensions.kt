@@ -7,6 +7,7 @@ import android.database.ContentObserver
 import android.database.Cursor
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
@@ -41,6 +42,26 @@ internal inline fun <reified T, reified U> HashMap<T, U>.putIfAbsentSupport(key:
     }
 }
 
+abstract class ContentObserverCompat(handler: Handler?) : ContentObserver(handler) {
+    final override fun onChange(selfChange: Boolean) {
+        onChange(selfChange, null)
+    }
+
+    final override fun onChange(selfChange: Boolean, uri: Uri?) {
+        onChange(selfChange, uri, 0)
+    }
+
+    final override fun onChange(selfChange: Boolean, uri: Uri?, flags: Int) {
+        if (uri == null)
+            onChange(selfChange, emptyList(), flags)
+        else
+            onChange(selfChange, listOf(uri), flags)
+    }
+
+    abstract override fun onChange(selfChange: Boolean, uris: Collection<Uri?>, flags: Int)
+    abstract override fun deliverSelfNotifications(): Boolean
+}
+
 @OptIn(ExperimentalTypeInference::class)
 internal fun versioningCallbackFlow(
     @BuilderInference block: suspend ProducerScope<Long>.(() -> Long) -> Unit
@@ -55,13 +76,21 @@ internal fun contentObserverVersioningFlow(
     notifyForDescendants: Boolean
 ): Flow<Long> {
     return versioningCallbackFlow { nextVersion ->
-        val listener = object : ContentObserver(null) {
-            override fun onChange(selfChange: Boolean) {
+        val listener = object : ContentObserverCompat(null) {
+            override fun onChange(selfChange: Boolean, uris: Collection<Uri?>, flags: Int) {
+                // TODO can we use those uris and flags for incremental reload at least on newer
+                //  platform versions?
                 scope.launch {
                     send(nextVersion())
                 }
             }
+
+            override fun deliverSelfNotifications(): Boolean {
+                return true
+            }
         }
+        // TODO is content observer reliable if process gets cached? or are we forced to re-register
+        //  and reload everything when regaining active state since Android 13?
         context.contentResolver.registerContentObserver(uri, notifyForDescendants, listener)
         send(nextVersion())
         awaitClose {
