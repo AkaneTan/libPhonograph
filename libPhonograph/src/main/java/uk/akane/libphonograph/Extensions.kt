@@ -11,8 +11,6 @@ import android.os.Handler
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
-import java.util.concurrent.atomic.AtomicLong
-import kotlin.experimental.ExperimentalTypeInference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
@@ -31,6 +29,9 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import java.io.File
+import java.util.concurrent.atomic.AtomicLong
+import kotlin.experimental.ExperimentalTypeInference
 
 internal inline fun <reified T, reified U> HashMap<T, U>.putIfAbsentSupport(key: T, value: U) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -127,6 +128,13 @@ internal inline fun <T> sharedFlow(
     val f = producer(shared.subscriptionCount)
     scope.launch { f.collect(shared) }
     return shared
+}
+
+fun File.toUri(): Uri {
+    val tmp = Uri.fromFile(this)
+    return if (tmp.scheme != "file") // This ONLY happens on Samsung devices...
+        tmp.buildUpon().scheme("file").build()
+    else tmp
 }
 
 // https://bladecoder.medium.com/smarter-shared-kotlin-flows-d6b75fc66754
