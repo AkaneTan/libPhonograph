@@ -290,7 +290,7 @@ internal object Reader {
                 // Build our mediaItem.
                 val song = MediaItem.Builder()
                     .setUri(pathFile?.toUri())
-                    .setMediaId(id.toString())
+                    .setMediaId("MediaStore:$id")
                     .setMimeType(mimeType)
                     .setMediaMetadata(
                         MediaMetadata
