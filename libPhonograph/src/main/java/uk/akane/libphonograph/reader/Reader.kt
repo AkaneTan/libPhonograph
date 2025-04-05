@@ -32,7 +32,7 @@ import uk.akane.libphonograph.items.FileNode
 import uk.akane.libphonograph.items.Genre
 import uk.akane.libphonograph.items.RawPlaylist
 import uk.akane.libphonograph.putIfAbsentSupport
-import uk.akane.libphonograph.toUri
+import uk.akane.libphonograph.toUriCompat
 import uk.akane.libphonograph.utils.MiscUtils
 import uk.akane.libphonograph.utils.MiscUtils.findBestAlbumArtist
 import uk.akane.libphonograph.utils.MiscUtils.findBestCover
@@ -289,7 +289,7 @@ internal object Reader {
 
                 // Build our mediaItem.
                 val song = MediaItem.Builder()
-                    .setUri(pathFile?.toUri())
+                    .setUri(pathFile?.toUriCompat())
                     .setMediaId("MediaStore:$id")
                     .setMimeType(mimeType)
                     .setMediaMetadata(
@@ -398,7 +398,7 @@ internal object Reader {
                         it.cover = Uri.Builder().scheme(coverStubUri)
                             .authority(it.id.toString()).path(p.first.absolutePath).build()
                     else
-                        findBestCover(p.first)?.let { f -> it.cover = f.toUri() }
+                        findBestCover(p.first)?.let { f -> it.cover = f.toUriCompat() }
                 }
             }
         }?.toList<Album>()

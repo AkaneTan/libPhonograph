@@ -130,9 +130,9 @@ internal inline fun <T> sharedFlow(
     return shared
 }
 
-fun File.toUri(): Uri {
+fun File.toUriCompat(): Uri {
     val tmp = Uri.fromFile(this)
-    return if (tmp.scheme != "file") // This ONLY happens on Samsung devices...
+    return if (tmp.scheme != "file") // This ONLY happens on Samsung and Ximi devices...
         tmp.buildUpon().scheme("file").build()
     else tmp
 }

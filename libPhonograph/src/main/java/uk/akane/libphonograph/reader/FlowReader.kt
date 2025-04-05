@@ -119,7 +119,7 @@ class FlowReader(
             artistListFlowMutable.emit(it.artistList!!)
             genreListFlowMutable.emit(it.genreList!!)
             dateListFlowMutable.emit(it.dateList!!)
-            idMapFlow.emit(it.idMap!!)
+            idMapFlowMutable.emit(it.idMap!!)
             folderStructureFlowMutable.emit(it.folderStructure!!)
             shallowFolderFlowMutable.emit(it.shallowFolder!!)
             foldersFlowMutable.emit(it.folders!!)
@@ -128,8 +128,9 @@ class FlowReader(
             hadFirstRefresh = true
         }
     }
-    private val idMapFlow = MutableSharedFlow<Map<Long, MediaItem>>(replay = 1)
+    private val idMapFlowMutable = MutableSharedFlow<Map<Long, MediaItem>>(replay = 1)
         .collectOtherFlowWhenBeingCollected(scope, readerFlow)
+    val idMapFlow: Flow<Map<Long, MediaItem>> = idMapFlowMutable
     private val songListFlowMutable = MutableSharedFlow<List<MediaItem>>(replay = 1)
         .collectOtherFlowWhenBeingCollected(scope, readerFlow)
     val songListFlow: Flow<List<MediaItem>> = songListFlowMutable
@@ -143,7 +144,7 @@ class FlowReader(
             else
                 null
         }
-    private val mappedPlaylistsFlow = idMapFlow.combine(rawPlaylistFlow) { idMap, rawPlaylists ->
+    private val mappedPlaylistsFlow = idMapFlowMutable.combine(rawPlaylistFlow) { idMap, rawPlaylists ->
         rawPlaylists.map { it.toPlaylist(idMap) }
     }
     private val albumListFlowMutable = MutableSharedFlow<List<Album>>(replay = 1)
